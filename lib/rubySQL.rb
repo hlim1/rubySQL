@@ -1,6 +1,8 @@
-require "rubySQL/version"
-
 module RubySQL
-  class Error < StandardError; end
-  # Your code goes here...
+  def self.connect(db_name)
+    connection = Connection.new(db_name)
+    connection.connect
+  end
 end
+
+require 'rubySQL/connection'
