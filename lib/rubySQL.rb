@@ -1,6 +1,11 @@
 class RubySQL
   ##
   # Main class for RubySQL that includes all other classes to execute methods.
+  # 
+  # Actual implementations for each methods reside in the "rubySQL/*" files.
+  #
+  # @db: RubySQL member instance variable stands for database.
+  # @dbh: Database object handler.
   
   def connect(db_name)
     @db = Connection.new(db_name)
