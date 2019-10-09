@@ -8,6 +8,8 @@ def main
   rbsql.connect("DB_test.db")
   # Check the current version of SQLite3
   rbsql.version
+  # Close DB
+  rbsql.close
 end
 
 main
