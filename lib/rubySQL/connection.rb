@@ -14,6 +14,8 @@ class RubySQL::Connection
   # Initialize the instance variable @db_name with the user specified DB name.
   # Params:
   # - db_name (str): Database name.
+  # Returns:
+  #   None
   def initialize(db_name)
     RubySQL::Assert.check_db_name(db_name)
     @db_name = db_name
@@ -38,8 +40,22 @@ class RubySQL::Connection
     end
   end
 
+  # Checks the SQLite3 version and does STDOUT print
+  # Params:
+  #   None
+  # Returns:
+  #   None
   def sqlite3_version
     version = @dbh.get_first_value 'SELECT SQLITE_VERSION()'
     printf "SQLite3 version %s", version
+  end
+  
+  # Checks if the database is opened and closes it.
+  # Params:
+  #   None
+  # Returns:
+  #   None
+  def sqlite3_close
+    @dbh.close if @dbh
   end
 end
