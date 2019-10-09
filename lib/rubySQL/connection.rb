@@ -1,4 +1,5 @@
 require 'sqlite3'
+require_relative 'assert'
 
 class RubySQL::Connection
   ##
@@ -12,24 +13,33 @@ class RubySQL::Connection
 
   # Initialize the instance variable @db_name with the user specified DB name.
   # Params:
-  # - db_name (str): Dabase name 
+  # - db_name (str): Database name.
   def initialize(db_name)
+    RubySQL::Assert.check_db_name(db_name)
     @db_name = db_name
   end
 
-  def connect
+  # Connects to SQLite3 database based on the user input or to the default DB.
+  # Params:
+  #   None
+  # Returns:
+  # - db (database obj): Connected SQLite3 database object.
+  def connect_sqlite3
     begin
       if not @db_name.empty?
-        db = SQLite3::Database.new @db_name
-        printf "Connected to DB: %s\n", @db_name
+        @dbh = SQLite3::Database.open @db_name
       else
-        db = SQLite3::Database.new "defaultDB"
-        printf "Connected to default DB: defaultDB"
+        @dbh = SQLite3::Database.open "DB_default.db"
       end
-      return db
+      return @dbh
     rescue SQLite3::Exception => e
       puts "Exception occurred"
       puts e
     end
+  end
+
+  def sqlite3_version
+    version = @dbh.get_first_value 'SELECT SQLITE_VERSION()'
+    printf "SQLite3 version %s", version
   end
 end
