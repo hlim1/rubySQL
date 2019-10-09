@@ -19,7 +19,31 @@ class RubySQL
   def close
     @db.sqlite3_close
   end
+
+  def create_table(table_name)
+    # @rbsql = RubySQL.new
+    # @db_create_tb = Create.new(@dbh)
+    # @db_create_tb.sqlite3_create_tb(table_name)
+    @table = {:table_name => table_name, :columns => [], :primary_key => ""}
+    self
+  end
+
+  def with(columns)
+    columns.each {|col| @table[:columns].push(col)}
+    self
+  end
+
+  def primary(column)
+    @table[:primary_key] = column
+    # DEBUG
+    self.print
+  end
+
+  def print
+    puts @table
+  end
 end
 
 require 'rubySQL/connection'
 require 'rubySQL/assert'
+require 'rubySQL/create'
