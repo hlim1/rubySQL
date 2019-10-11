@@ -10,6 +10,7 @@ class RubySQL
   def connect(db_name)
     @db = Connection.new(db_name)
     @dbh = @db.connect_sqlite3
+    @tb_creator = Create.new(@dbh)
   end
 
   def version
@@ -32,8 +33,15 @@ class RubySQL
 
   def primary(column)
     @table[:primary_key] = column
-    tb_creator = Create.new(@dbh)
-    tb_creator.sqlite3_create_tb(@table[:table_name], @table[:columns], @table[:primary_key])
+    @tb_creator.sqlite3_create_tb(@table[:table_name], @table[:columns], @table[:primary_key])
+  end
+
+  def schema_of(table_name)
+    @tb_creator.sqlite3_schema(table_name)
+  end
+
+  def list_tables
+    @tb_creator.sqlite3_list_tables
   end
 
   # This is just for debugging purpose.
