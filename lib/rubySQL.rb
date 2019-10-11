@@ -4,7 +4,7 @@ class RubySQL
   # 
   # Actual implementations for each methods reside in the "rubySQL/*" files.
   #
-  # @db: RubySQL member instance variable stands for database.
+  # @db:  RubySQL member instance variable stands for database.
   # @dbh: Database object handler.
   
   def connect(db_name)
@@ -21,9 +21,6 @@ class RubySQL
   end
 
   def create_table(table_name)
-    # @rbsql = RubySQL.new
-    # @db_create_tb = Create.new(@dbh)
-    # @db_create_tb.sqlite3_create_tb(table_name)
     @table = {:table_name => table_name, :columns => [], :primary_key => ""}
     self
   end
@@ -35,10 +32,11 @@ class RubySQL
 
   def primary(column)
     @table[:primary_key] = column
-    # DEBUG
-    self.print
+    tb_creator = Create.new(@dbh)
+    tb_creator.sqlite3_create_tb(@table[:table_name], @table[:columns], @table[:primary_key])
   end
 
+  # This is just for debugging purpose.
   def print
     puts @table
   end
