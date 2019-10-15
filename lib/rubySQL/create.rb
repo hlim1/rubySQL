@@ -2,13 +2,28 @@ require 'sqlite3'
 require_relative 'assert'
 
 class RubySQL::Create
+  # Initializes a new class member variable with the passed db handler.
+  # Params:
+  # - dbh (db obj): Database handler
+  # Returns:
+  # - None
   def initialize(dbh)
     @dbh = dbh
   end
 
-  def sqlite3_create_tb(table_name, columns, primary_key)
-    # TODO: Assert existing table name
-    
+  # Create a new table in the database.
+  # Params:
+  # - table_name (str): Table name.
+  # - columns (list): A list of hashes that holds column info.
+  # - primary_key (str): A column name that will be set to primary key.
+  # - if_not_exist (str): It tells whether the user wants to execute create
+  # operation even if the table exists or not.
+  # Returns:
+  # - None
+  def sqlite3_create_tb(table_name, columns, primary_key, if_not_exist)
+    if if_not_exist.downcase == "n"
+      RubySQL::Assert.table_exist(table_name, @dbh)
+    end 
     # Retrieve only the column names
     col_names = columns[0].keys
     table_spec_str = '('
@@ -31,9 +46,14 @@ class RubySQL::Create
     table_spec_str.chomp!(',')
     table_spec_str.concat(')')
 
-    @dbh.execute("CREATE TABLE #{table_name} #{table_spec_str};")
+    @dbh.execute("CREATE TABLE IF NOT EXISTS #{table_name} #{table_spec_str};")
   end
 
+  # Prints out the schema of specified table.
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - None 
   def sqlite3_schema(table_name)
     table_schema = @dbh.execute("PRAGMA table_info(#{table_name});")
 
@@ -78,6 +98,11 @@ class RubySQL::Create
     }
   end
 
+  # Prints out the list of all tables in the database with their schema.
+  # Params:
+  # - None
+  # Returns:
+  # - None
   def sqlite3_list_tables
     tables = @dbh.execute("select * from sqlite_master where type='table';")
     tables.each {|table|
