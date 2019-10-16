@@ -47,7 +47,7 @@ class RubySQL::Connection
   #   None
   def sqlite3_version
     version = @dbh.get_first_value 'SELECT SQLITE_VERSION()'
-    printf "SQLite3 version %s", version
+    printf "SQLite3 version %s\n", version
   end
   
   # Checks if the database is opened and closes it.
