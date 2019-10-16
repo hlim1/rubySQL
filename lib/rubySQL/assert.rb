@@ -1,6 +1,15 @@
 require 'sqlite3'
 
 class RubySQL::Assert
+  # An array of SQLite3 types
+  @sqlite3_types = [
+    "TEXT", "CHAR",
+    "CHARACTER", "VARCHAR",
+    "INT", "INTEGER",
+    "NULL", "REAL",
+    "BLOB", "BOOL"
+  ]
+
   # Checks validity of database name that was input from the user.
   # Database name must be a string type. Error and exist otherwise.
   # Params:
@@ -32,5 +41,20 @@ class RubySQL::Assert
         exit
       end
     }
+  end
+
+  # Checks for the type that the user input. If the input type is not
+  # in the @sqlite3_types array, give an error and exit after safely closing
+  # the database.
+  # Params:
+  # - type (str): User input type
+  # Returns:
+  # - None
+  def self.check_type(type)
+    if !@sqlite3_types.include?(type.upcase)
+      printf "Error: Type #{type} is not a valid SQLite3 type.\n"
+      dbh.close if dbh
+      exit
+    end
   end
 end
