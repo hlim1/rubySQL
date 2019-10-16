@@ -6,7 +6,18 @@ class RubySQL
   #
   # @db:  RubySQL member instance variable stands for database.
   # @dbh: Database object handler.
- 
+
+  # Declare instance variables
+  # List of tables in the database will be loaded on memory.
+  # Structure:
+  #   {"__table_name__" => {
+  #       :col_name => [__col_type__, __null?__, __pk?__],
+  #       ...
+  #     },
+  #     ...
+  #   }
+  @tables = {} 
+
   # Initializes @db, @dbh, and @tb_creator objects and calls connect_sqlite3
   # method from connect.rb to connect to the database.
   # Params:
@@ -16,7 +27,7 @@ class RubySQL
   def connect(db_name)
     @db = Connection.new(db_name)
     @dbh = @db.connect_sqlite3
-    @tb_creator = Create.new(@dbh)
+    @tb_creator = Create.new(@dbh, db_name)
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -51,7 +62,7 @@ class RubySQL
   # already exists without any warning. It is recommended to specify "Y" if the user
   # is using this create_table method in the static stored file program.
   # Retuns:
-  # - None 
+  # - self (RubySQL obj): returns self. This is for method chaining
   def create_table(table_name, if_not_exist="N")
     @table = {
       :table_name => table_name, 
@@ -62,11 +73,23 @@ class RubySQL
     self
   end
 
+  # Populates @table[:columns] hash with the user input.
+  # This must be used with create_table.
+  # Params:
+  # - columns (array): Array of hash holding table column info from the user
+  # Returns: None
   def with(columns)
     columns.each {|col| @table[:columns].push(col)}
     self
   end
 
+  # Populates @table[:primary_key] and calls sqlite3_create_tb from create.rb
+  # to create a table with the completly filled @table hash.
+  # This must be used with create_table and with methods as a method chaining.
+  # Params:
+  # - column (str): Column name that is for primary key
+  # None:
+  # - None
   def primary(column)
     @table[:primary_key] = column
     @tb_creator.sqlite3_create_tb(
@@ -77,12 +100,37 @@ class RubySQL
     )
   end
 
+  # Call sqlite3_schema method from create.rb to print the table schema.
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - None
   def schema_of(table_name)
     @tb_creator.sqlite3_schema(table_name)
   end
 
+  # Calls sqlite3_list_tables to print the list of tables in the database.
+  # Params:
+  # - None
+  # Returns:
+  # - None
   def list_tables
     @tb_creator.sqlite3_list_tables
+  end
+
+  # Populate the tables in the database to on memory for faster lookup.
+  # Params:
+  # - None
+  # Returns:
+  # -
+  def populate_tables_to_memory
+    tables = @tb_creator.sqlite3_all_tables
+    if !tables.empty?
+      tables.each {|table|
+        tb_pragma = @tb_creator.sqlite3_pragma(table[1])
+
+      }
+    end
   end
 
   # This is just for debugging purpose.
