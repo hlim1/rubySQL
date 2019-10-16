@@ -5,10 +5,12 @@ class RubySQL::Create
   # Initializes a new class member variable with the passed db handler.
   # Params:
   # - dbh (db obj): Database handler
+  # - db_name (str): Database name
   # Returns:
   # - None
-  def initialize(dbh)
+  def initialize(dbh, db_name)
     @dbh = dbh
+    @db_name = db_name
   end
 
   # Create a new table in the database.
@@ -24,22 +26,24 @@ class RubySQL::Create
     if if_not_exist.downcase == "n"
       RubySQL::Assert.table_exist(table_name, @dbh)
     end 
+
     # Retrieve only the column names
     col_names = columns[0].keys
+    
     table_spec_str = '('
-
+    # col: Column name
     # columns[0][col][0]: Column type
     # columns[1][col][1]: Column nullable
     col_names.each {|col|
-      # TODO: Assert function for type checking
+      col_type = columns[0][col][0]
+      RubySQL::Assert.check_type(col_type)
       if col == primary_key
-        # TODO: Assert function for checking nullable (MUST be NO)
-        table_spec_str.concat("#{col} #{columns[0][col][0]} PRIMARY KEY NOT NULL,")
+        table_spec_str.concat("#{col} #{col_type} PRIMARY KEY NOT NULL,")
       else
         if columns[0][col][1].downcase == "no"
-          table_spec_str.concat("#{col} #{columns[0][col][0]} NOT NULL,")
+          table_spec_str.concat("#{col} #{col_type} NOT NULL,")
         else
-          table_spec_str.concat("#{col} #{columns[0][col][0]},")
+          table_spec_str.concat("#{col} #{col_type},")
         end
       end
     }
@@ -55,7 +59,7 @@ class RubySQL::Create
   # Returns:
   # - None 
   def sqlite3_schema(table_name)
-    table_schema = @dbh.execute("PRAGMA table_info(#{table_name});")
+    table_schema = sqlite3_pragma(table_name)
 
     # First, find the max lengths of each column's title strings
     # for nice print out in a fixed length of table format
@@ -98,15 +102,37 @@ class RubySQL::Create
     }
   end
 
+  # Get and return the table PRAGMA
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - None
+  def sqlite3_pragma(table_name)
+    return  @dbh.execute("PRAGMA table_info(#{table_name});")
+  end
+
   # Prints out the list of all tables in the database with their schema.
   # Params:
   # - None
   # Returns:
   # - None
   def sqlite3_list_tables
-    tables = @dbh.execute("select * from sqlite_master where type='table';")
-    tables.each {|table|
-      printf "#{table[1]} | #{table[4]}\n"
-    }
+    tables = sqlite3_all_tables
+    if !tables.empty?
+      tables.each {|table|
+        printf "#{table[1]} | #{table[4]}\n"
+      }
+    else
+      printf "Database [#{@db_name}] is empty.\n"      
+    end
+  end
+
+  # Get and return the list of tables in the database
+  # Params:
+  # - None
+  # Returns:
+  # - tables (array): An array of tables.
+  def sqlite3_all_tables
+    return @dbh.execute("select * from sqlite_master where type='table';")
   end
 end
