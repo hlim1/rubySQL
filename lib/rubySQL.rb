@@ -6,6 +6,7 @@ class RubySQL
   #
   # @db:  RubySQL member instance variable stands for database.
   # @dbh: Database object handler.
+  # @dbm: Database manager.
 
   # Declare instance variables
   # List of tables in the database will be loaded on memory.
@@ -18,6 +19,9 @@ class RubySQL
   #   }
   @tables = {} 
 
+  def initialize
+  end
+
   # Initializes @db, @dbh, and @tb_creator objects and calls connect_sqlite3
   # method from connect.rb to connect to the database.
   # Params:
@@ -27,7 +31,9 @@ class RubySQL
   def connect(db_name)
     @db = Connection.new(db_name)
     @dbh = @db.connect_sqlite3
-    @tb_creator = Create.new(@dbh, db_name)
+    @dbm = DBManager.new(@dbh)
+    @dbm.load_tables
+    @tb_creator = Create.new(@dbh, @dbm, db_name)
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -115,22 +121,7 @@ class RubySQL
   # Returns:
   # - None
   def list_tables
-    @tb_creator.sqlite3_list_tables
-  end
-
-  # Populate the tables in the database to on memory for faster lookup.
-  # Params:
-  # - None
-  # Returns:
-  # -
-  def populate_tables_to_memory
-    tables = @tb_creator.sqlite3_all_tables
-    if !tables.empty?
-      tables.each {|table|
-        tb_pragma = @tb_creator.sqlite3_pragma(table[1])
-
-      }
-    end
+    .sqlite3_list_tables
   end
 
   # This is just for debugging purpose.
@@ -142,3 +133,4 @@ end
 require 'rubySQL/connection'
 require 'rubySQL/assert'
 require 'rubySQL/create'
+require 'rubySQL/db_manager'
