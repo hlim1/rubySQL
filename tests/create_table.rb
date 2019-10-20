@@ -15,6 +15,7 @@ def main
     "AGE" => ["INT", "NO"], "ADDRESS" => ["TEXT", "YES"], 
     "SALARY" => ["REAL", "YES"]
   ]).primary("ID")
+
   rbsql.create_table("COMPANY_B", "Y").with([
     "ID" => ["INT", "NO"], "NAME" => ["TEXT", "NO"], 
     "AGE" => ["INT", "NO"], "ADDRESS" => ["TEXT", "YES"], 
