@@ -33,6 +33,7 @@ class RubySQL::Connection
       else
         @dbh = SQLite3::Database.open "DB_default.db"
       end
+      @dbh.results_as_hash = true
       return @dbh
     rescue SQLite3::Exception => e
       puts "Exception occurred"
