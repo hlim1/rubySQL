@@ -21,13 +21,14 @@ class RubySQL::DBManager
     #     ...
     #   }
     @table_ast = Hash.new
-    # Hash that actually holds data
+    # Hash that actually holds data.
+    # mem_database := memory_database.
     # Structure:
     #   {"__table_name__" => {
     #       "__col_name__" => [],
     #       ...
     #   },
-    @database = Hash.new
+    @mem_database = Hash.new
   end
 
   # Construct database abstract syntax tree.
@@ -70,9 +71,19 @@ class RubySQL::DBManager
     }
   end
 
-  # Update AST when UPDATE and DELETE.
-  def update_AST
+  # Update AST when UPDATE and DROP.
+  # actions: {
+  #   "d" => "drop",
+  #   "c" => "create column"
+  # }
+  def update_AST(action, table_name, col_spec=nil)
+    if action == "d"
+      # Delete table from the AST
+      status = @table_ast.delete(table_name)
+    end
+  end
 
+  def update_mem_database
   end
 
   # Get and return the list of tables in the database
