@@ -33,6 +33,7 @@ class RubySQL::Connection
       else
         @dbh = SQLite3::Database.open "DB_default.db"
       end
+      @dbh.results_as_hash = true
       return @dbh
     rescue SQLite3::Exception => e
       puts "Exception occurred"
@@ -47,7 +48,7 @@ class RubySQL::Connection
   #   None
   def sqlite3_version
     version = @dbh.get_first_value 'SELECT SQLITE_VERSION()'
-    printf "SQLite3 version %s", version
+    printf "SQLite3 version %s\n", version
   end
   
   # Checks if the database is opened and closes it.
