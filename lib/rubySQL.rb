@@ -29,11 +29,12 @@ class RubySQL
   # Returns:
   # - None
   def connect(db_name)
-    @db = Connection.new(db_name)
+    @db = Connection.new(db_name)   # Connect to <db_name> database
     @dbh = @db.connect_sqlite3
-    @dbm = DBManager.new(@dbh)
+    @dbm = DBManager.new(@dbh)      # Initialize database manageer
+    @dbm.create_ast                 # Create DB AST
     @dbm.load_tables
-    @tb_creator = Create.new(@dbh, @dbm, db_name)
+    @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -121,7 +122,7 @@ class RubySQL
   # Returns:
   # - None
   def list_tables
-    .sqlite3_list_tables
+    @tb_creator.sqlite3_list_tables
   end
 
   # This is just for debugging purpose.
