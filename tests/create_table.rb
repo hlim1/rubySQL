@@ -27,12 +27,6 @@ def main
   rbsql.schema_of("COMPANY_B")
 
   rbsql.list_tables
-
-  rbsql.drop_table("COMPANY_B")
-
-  puts "Dropping COMPANY_B"
-
-  rbsql.list_tables
   # Close DB
   rbsql.close
 end
