@@ -37,19 +37,34 @@ class RubySQL::Assert
   # If the user is trying to create a table that already exists,
   # this assert method will given an error and exit after closing the database safely.
   # Params:
+  # - status (bool): true if table exists, false, if table does not exists.
   # - table_name (str): Table name
-  # - dbh(db obj): Database handler for currently connected database
   # Returns:
   # - None
-  def self.table_exist(table_name, dbh)
-    tables = dbh.execute("select * from sqlite_master where type='table';")
-    tables.each {|table|
-      if table_name == table[1]
-        printf "Error: Table #{table_name} already exist.\n"
-        dbh.close if dbh
-        exit
-      end
+  def self.table_already_exist(status, table_name, dbh)
+    if status == true
+      printf "Error: Table #{table_name} already exist.\n"
+      dbh.close if dbh
+      exit
+    end
+
+    #tables = dbh.execute("select * from sqlite_master where type='table';")
+    #tables.each {|table|
+      #if table_name == table[1]
+        #printf "Error: Table #{table_name} already exist.\n"
+        #dbh.close if dbh
+        #exit
+      #end
     }
+    
+  end
+
+  def self.table_not_exist(status, table_name, dbh)
+    if status == false or status == nil
+      printf "Error: Table #{table_name} does not exist in the database.\n"
+      dbh.close if dbh
+      exit
+    end
   end
 
   # Checks for the type that the user input. If the input type is not
