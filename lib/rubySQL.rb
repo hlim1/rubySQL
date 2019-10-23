@@ -8,17 +8,6 @@ class RubySQL
   # @dbh: Database object handler.
   # @dbm: Database manager.
 
-  # Declare instance variables
-  # List of tables in the database will be loaded on memory.
-  # Structure:
-  #   {"__table_name__" => {
-  #       :col_name => [__col_type__, __null?__, __pk?__],
-  #       ...
-  #     },
-  #     ...
-  #   }
-  @tables = {} 
-
   def initialize
   end
 
@@ -32,7 +21,7 @@ class RubySQL
     @db = Connection.new(db_name)   # Connect to <db_name> database
     @dbh = @db.connect_sqlite3
     @dbm = DBManager.new(@dbh)      # Initialize database manageer
-    @dbm.create_ast                 # Create DB AST
+    @db_ast = @dbm.create_ast                 # Create DB AST
     @dbm.load_tables
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
   end
@@ -125,6 +114,12 @@ class RubySQL
     @tb_creator.sqlite3_list_tables
   end
 
+  # Drops specified table from the database
+  def drop_table(table_name)
+    @dropper = Drop.new(@dbh, @dbm, @db_ast)
+    @dropper.drop_table(table_name)
+  end
+
   # This is just for debugging purpose.
   def print
     puts @table
@@ -134,4 +129,5 @@ end
 require 'rubySQL/connection'
 require 'rubySQL/assert'
 require 'rubySQL/create'
+require 'rubySQL/drop'
 require 'rubySQL/db_manager'

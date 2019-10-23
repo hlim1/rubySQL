@@ -1,0 +1,23 @@
+RubySQL manages database with abstract syntax tree (AST).
+There are a multiple different ASTs and data holder trees.
+
+1. On DB connection, RubySQL's DBMannger loads database table schemas and data to memory.
+    1a. Abstract Syntax Tree Structure:
+        {
+            "__table_name__" => [
+                "__column_name__" => {
+                    :type   => "__column_type__",       # symbol => str
+                    :null?  => __null?__,               # symbol => int (0: Not null, 1: Null)
+                    :pk?    => __pk?__,                 # symbol => int (0: Not null, 1: Null)
+                },
+                ...
+            ],
+            ...
+        }
+    1b. Data holder structure:
+        {
+            "__table_name__" => {
+                "__column_name__" => [__data_1__, __data_2__, ... , __data_n__],
+                ...
+            },
+        }

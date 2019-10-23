@@ -27,7 +27,6 @@ def main
   rbsql.schema_of("COMPANY_B")
 
   rbsql.list_tables
-
   # Close DB
   rbsql.close
 end
