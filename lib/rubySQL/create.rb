@@ -26,7 +26,8 @@ class RubySQL::Create
   # - None
   def sqlite3_create_tb(table_name, columns, primary_key, if_not_exist)
     if if_not_exist.downcase == "n"
-      RubySQL::Assert.table_exist(table_name, @dbh)
+      status = @dbm.table_exist?(table_name)
+      RubySQL::Assert.table_already_exist(status, table_name, @dbh)
     end 
 
     # Retrieve only the column names

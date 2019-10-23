@@ -10,11 +10,9 @@ class RubySQL::Drop
   end
 
   def drop_table(table_name)
-    if !tables.has_key?(table_name)
-        printf "Error: Table #{table_name} does not exist.\n"
-        dbh.close if dbh
-        exit
-    end
+    status = @dbm.table_exist?(table_name)
+    RubySQL::Assert.table_not_exist(status, table_name, @dbh)
+
     @dbh.execute("DROP TABLE #{table_name}")
     # Update AST by removing the table.
     @dbm.update_AST("d", table_name)

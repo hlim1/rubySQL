@@ -24,10 +24,12 @@ class RubySQL::DBManager
     # Hash that actually holds data.
     # mem_database := memory_database.
     # Structure:
-    #   {"__table_name__" => {
-    #       "__col_name__" => [],
-    #       ...
-    #   },
+    #   {
+    #     "__table_name__" => {
+    #         "__col_name__" => [],
+    #         ...
+    #     },
+    #   }
     @mem_database = Hash.new
   end
 
@@ -65,9 +67,7 @@ class RubySQL::DBManager
     tables = @table_ast.keys
     tables.each {|table|
       rows = @dbh.execute("SELECT * FROM #{table}")
-      puts rows
-      @table_ast[table].each {|col|
-      }
+      @mem_database[table] = rows
     }
   end
 
@@ -83,7 +83,16 @@ class RubySQL::DBManager
     end
   end
 
-  def update_mem_database
+  # Update on memory database.
+  # actions: {
+  #   "d" => "drop",
+  #   "c" => "create column"
+  # }
+  def update_mem_database (action, table_name)
+    if action == "d"
+      # Delete table from in memory DB
+      status = @mem_database.delete(table_name)
+    end
   end
 
   # Get and return the list of tables in the database
@@ -101,6 +110,11 @@ class RubySQL::DBManager
   # Returns:
   # - None
   def sqlite3_pragma(table_name)
-    return  @dbh.execute("PRAGMA table_info(#{table_name});")
+    return @dbh.execute("PRAGMA table_info(#{table_name});")
+  end
+
+  def table_exist?(table_name)
+    status = @table_ast.has_key?(table_name)
+    return status
   end
 end
