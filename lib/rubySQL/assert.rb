@@ -19,7 +19,16 @@ class RubySQL::Assert
   def self.check_db_name(db_name)
     if not db_name.is_a?(String)
       puts "Error: Invalid db_name type. db_name type must be String."
-      printf "Error: User input <%s>, which is type <%s>.\n", db_name, db_name.class
+      printf "Error: User input <#{db_name}>, which is type <#{db_name.class}>.\n"
+      exit
+    end
+  end
+
+  def self.check_table_name(table_name, dbh)
+    if not table_name.is_a?(String)
+      puts "Error: Invalid table_name type. Table name type must be String."
+      printf "Error: User input <#{table_name}>, which is type <#{table_name.class}>.\n"
+      dbh.close if dbh
       exit
     end
   end

@@ -92,4 +92,9 @@ class RubySQL::DBManager
   def sqlite3_pragma(table_name)
     return  @dbh.execute("PRAGMA table_info(#{table_name});")
   end
+
+  def get_table_ast(table_name)
+    status = @table_ast.has_key?(table_name)
+    return table_ast
+  end
 end
