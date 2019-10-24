@@ -55,8 +55,7 @@ class RubySQL::Assert
         #dbh.close if dbh
         #exit
       #end
-    }
-    
+    #}
   end
 
   def self.table_not_exist(status, table_name, dbh)
@@ -80,5 +79,18 @@ class RubySQL::Assert
       dbh.close if dbh
       exit
     end
+  end
+
+  def self.check_class(input_class, compare_class, dbh)
+    if input_class != compare_class
+      puts "Error: Invalid value class (#{input_clas})."
+      puts "The value class must be #{compare_class}."
+      dbh.close if dbh
+      exit
+    end
+  end
+
+  def self.column_not_exist(status, dbh)
+
   end
 end
