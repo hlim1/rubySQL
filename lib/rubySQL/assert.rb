@@ -7,6 +7,8 @@ class RubySQL::Assert
     "CHARACTER", "VARCHAR",
     "INT", "INTEGER",
     "NULL", "REAL",
+    "DOUBLE", "DOUBLE PRECISION",
+    "FLOAT",
     "BLOB", "BOOL"
   ]
 
@@ -127,6 +129,49 @@ class RubySQL::Assert
       puts msg
       dbh.close if dbh
       exit
+    end
+  end
+
+  def self.check_column_value(cur_column_in_table, value, dbh)
+    col_name = cur_column_in_table[0]
+    col_type = cur_column_in_table[1][:type]
+    col_pk_stat = cur_column_in_table[1][:pk?]
+    status = 1
+    # TODO: Type check for BLOB
+    if (
+        (col_type.upcase == "INT"\
+         or col_type.upcase == "INTEGER")\
+        and value.class != Integer\
+    )
+      status = 0
+    elsif (
+        (col_type.upcase == "TEXT" \
+         or col_type.upcase.include? "CHAR"\
+         or col_type.upcase.include? "CHARACTER"\
+         or col_type.upcase.include? "VARCHAR")\
+        and value.class != String\
+    )
+      status = 0
+    elsif (
+        (col_type.upcase == "REAL"\
+         or col_type.upcase == "DOUBLE"\
+         or col_type.upcase == "DOUBLE PRECISION"\
+         or col_type.upcase  == "FLOAT")\
+        and value.class != Float\
+    )
+      status = 0
+    elsif (
+        col_type.upcase == "BOOL"\
+        and (value.class != TrueClass\
+             or value.class != FalseClass)\
+    )
+      status == 0
+    end
+
+    if status == 0  
+      msg = "Error: Column #{col_name} type is #{col_type}.\n"
+      msg += "User input value type is #{value.class}."
+      default_error_check(0, msg, dbh)
     end
   end
 end
