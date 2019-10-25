@@ -11,19 +11,21 @@ class RubySQL
   def initialize
   end
 
-  # Initializes @db, @dbh, and @tb_creator objects and calls connect_sqlite3
+  # Initializes @db, @dbh, @tb_creator, insert_hd objects.
+  # It connects to user specified database by calling connect_sqlite3
   # method from connect.rb to connect to the database.
   # Params:
   # - db_name (str): Database name
   # Returns:
   # - None
   def connect(db_name)
-    @db = Connection.new(db_name)   # Connect to <db_name> database
+    @db  = Connection.new(db_name)  # Connect to <db_name> database
     @dbh = @db.connect_sqlite3
     @dbm = DBManager.new(@dbh)      # Initialize database manageer
     @db_ast = @dbm.create_ast                 # Create DB AST
     @dbm.load_tables
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
+    @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -114,6 +116,26 @@ class RubySQL
     @tb_creator.sqlite3_list_tables
   end
 
+  # Creates a new hash that has AST structure for insert.
+  # Params:
+  # - values (array): An array that holds values.
+  def insert(values)
+    @insert = {
+      :table_name => "",
+      :values => values
+    }
+    self
+  end
+
+  # Fully construct the insert AST with values and table name.
+  # It calls sqlite3_insert method from insert.rb.
+  # Params:
+  # - table_name (str): Table name
+  def into(table_name)
+    @insert[:table_name] = table_name
+    @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values])
+  end
+
   # Drops specified table from the database
   def drop_table(table_name)
     @dropper = Drop.new(@dbh, @dbm, @db_ast)
@@ -129,5 +151,6 @@ end
 require 'rubySQL/connection'
 require 'rubySQL/assert'
 require 'rubySQL/create'
+require 'rubySQL/insert'
 require 'rubySQL/drop'
 require 'rubySQL/db_manager'
