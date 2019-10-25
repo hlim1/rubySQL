@@ -19,13 +19,15 @@ class RubySQL
   # Returns:
   # - None
   def connect(db_name)
-    @db  = Connection.new(db_name)  # Connect to <db_name> database
+    @db  = Connection.new(db_name)                # Connect to <db_name> database
     @dbh = @db.connect_sqlite3
-    @dbm = DBManager.new(@dbh)      # Initialize database manageer
-    @db_ast = @dbm.create_ast                 # Create DB AST
+    @dbm = DBManager.new(@dbh)                    # Initialize database manageer
+    @db_ast = @dbm.create_ast                     # Create DB AST
     @dbm.load_tables
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
     @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
+
+    @query_file = File.new("Queries.txt", "w+")
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -94,7 +96,8 @@ class RubySQL
       @table[:table_name], 
       @table[:columns], 
       @table[:primary_key],
-      @table[:if_not_exist]
+      @table[:if_not_exist],
+      @query_file
     )
   end
 
