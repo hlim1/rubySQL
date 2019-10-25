@@ -43,10 +43,11 @@ class RubySQL::Insert
         
         # Extract user input value
         col_name = value.keys[0]
-        status = table_ast.has_key?(col_name)
-        error_msg = "Column #{col_name} does not exist in table #{table_name}."
+        status = table_ast.has_key?(col_name.to_s)
+        error_msg = "Column #{col_name.to_s} does not exist in table #{table_name}.\n"
+        error_msg += @dbm.get_table_schema(table_name)
         RubySQL::Assert.default_error_check(status, error_msg, @dbh)
-        column_to_value[col_name] = value[col_name]
+        column_to_value[col_name.to_s] = value[col_name]
       else
         # Compare input value type with table column type
         cur_column_in_table = index_to_column[vl_index]
@@ -62,5 +63,23 @@ class RubySQL::Insert
     column_to_value.each {|col_name, value|
       puts "#{col_name}, #{value}"
     }
+    insert_query = "INSERT INTO #{table_name} ("
+    column_to_value.each_key {|col_name|
+      insert_query += "#{col_name},"
+    }
+    insert_query.chomp!(',')
+    insert_query += ") VALUES ("
+    column_to_value.each_value {|value|
+      if value.class == String
+        insert_query += "'#{value}',"
+      else
+        insert_query += "#{value},"
+      end
+    }
+    insert_query.chomp!(',')
+    insert_query += ');'
+
+    puts "Query: #{insert_query}"
+    @dbh.execute(insert_query)
   end
 end
