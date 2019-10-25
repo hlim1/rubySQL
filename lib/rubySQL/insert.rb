@@ -27,15 +27,15 @@ class RubySQL::Insert
     RubySQL::Assert.check_class(values.class, Array, @dbh)
     values.each {|value|
       if value.class == Hash
-        if value.size > 1
-          puts "Error: Size of hash for insert value cannot exeed."
-          @dbh.close if @dbh
-          exit
-        end
+        status = value.size > 1
+        error_msg = "Error: Size of hash for insert value cannot exeed 1."
+        RubySQL::Assert.default_error_check(status, error_msg, @dbh)
+
         col_name = value.keys[0]
         col_value = value[col_name]
         status = table_ast.has_key?(col_name)
-        RubySQL::Assert.column_not_exit(status, @dbh)
+        error_msg = "Column #{col_name} does not exist in table #{table_name}."
+        RubySQL::Assert.default_error_check(status, error_msg, @dbh)
       end
     }
   end
