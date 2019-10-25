@@ -23,11 +23,10 @@ class RubySQL
     @dbh = @db.connect_sqlite3
     @dbm = DBManager.new(@dbh)                    # Initialize database manageer
     @db_ast = @dbm.create_ast                     # Create DB AST
-    @dbm.load_tables
+    @mem_db = @dbm.load_tables                    # Load data on to memory from the DB
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
     @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
-
-    @query_file = File.new("Queries.txt", "w+")
+    @query_file = File.new("Queries.txt", "w+")   # Open a file that will store all executed queries
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -136,7 +135,7 @@ class RubySQL
   # - table_name (str): Table name
   def into(table_name)
     @insert[:table_name] = table_name
-    @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values])
+    @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @query_file, @mem_db)
   end
 
   # Drops specified table from the database

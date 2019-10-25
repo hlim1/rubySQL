@@ -132,7 +132,7 @@ class RubySQL::Assert
     end
   end
 
-  def self.check_column_value(cur_column_in_table, value, dbh)
+  def self.check_column_value(cur_column_in_table, value, mem_db, dbh)
     col_name = cur_column_in_table[0]
     col_type = cur_column_in_table[1][:type]
     col_pk_stat = cur_column_in_table[1][:pk?]

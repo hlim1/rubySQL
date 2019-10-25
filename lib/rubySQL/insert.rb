@@ -12,7 +12,9 @@ class RubySQL::Insert
   # Params:
   # - table_name (str): Table name
   # - values (array): An array that holds values.
-  def sqlite3_insert(table_name, values)
+  # - query_file (file): A file object that executed query will be stored.
+  # - mem_db (hash) : Memory loaded database object.
+  def sqlite3_insert(table_name, values, query_file, mem_db)
     RubySQL::Assert.check_table_name(table_name, @dbh)
 
     table_ast = Hash.new
@@ -51,7 +53,7 @@ class RubySQL::Insert
       else
         # Compare input value type with table column type
         cur_column_in_table = index_to_column[vl_index]
-        RubySQL::Assert.check_column_value(cur_column_in_table, value, @dbh)
+        RubySQL::Assert.check_column_value(cur_column_in_table, value, mem_db[table_name], @dbh)
         col_name = cur_column_in_table[0]
         column_to_value[col_name] = value
       end
@@ -59,10 +61,10 @@ class RubySQL::Insert
       vl_index += 1
     }
 
-    # TODO: Generate a complete SQL query in string, then execute it.
     column_to_value.each {|col_name, value|
       puts "#{col_name}, #{value}"
     }
+
     insert_query = "INSERT INTO #{table_name} ("
     column_to_value.each_key {|col_name|
       insert_query += "#{col_name},"
@@ -79,7 +81,7 @@ class RubySQL::Insert
     insert_query.chomp!(',')
     insert_query += ');'
 
-    puts "Query: #{insert_query}"
     @dbh.execute(insert_query)
+    query_file.write(insert_query+"\n")
   end
 end
