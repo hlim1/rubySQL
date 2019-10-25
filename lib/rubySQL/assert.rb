@@ -114,10 +114,6 @@ class RubySQL::Assert
     end
   end
 
-  def self.column_not_exist(status, dbh)
-
-  end
-
   # Check for the passed status and print out error message
   # and  terminate the program or do nothing.
   # Params:
@@ -126,7 +122,7 @@ class RubySQL::Assert
   # - dbh (DB obj): Database handlerfor closing the DB.
   # Returns:
   # - None.
-  def self.error_message(status, msg, dbh)
+  def self.default_error_check(status, msg, dbh)
     if status == 0 or status == false
       puts msg
       dbh.close if dbh
