@@ -62,13 +62,23 @@ class RubySQL::DBManager
   # Params:
   # - None
   # Returns:
-  # -
+  # - @mem_database (hash): Hash that holds all data loaded from DB.
   def load_tables
     tables = @table_ast.keys
     tables.each {|table|
+      columns = Hash.new
+      column_names = @table_ast[table].keys
       rows = @dbh.execute("SELECT * FROM #{table}")
-      @mem_database[table] = rows
+      column_names.each {|col|
+        col_data = Array.new
+        rows.each {|data|
+          col_data.push(data[col])
+        }
+        columns[col] = col_data
+      }
+      @mem_database[table] = columns
     }
+    return @mem_database
   end
 
   # Update AST when UPDATE and DROP.
@@ -122,5 +132,21 @@ class RubySQL::DBManager
     status = @table_ast.has_key?(table_name)
     RubySQL::Assert.table_not_exist(status, table_name, @dbh)
     return @table_ast[table_name]
+  end
+
+  def get_table_schema(table_name)
+    table_schema = "#{table_name} ("
+    @table_ast[table_name].each {|col_name, col_info|
+      null_stat = (col_info[:null?] == 1 ? "NOT NULL":"NULL")
+      pk_stat = (col_info[:pk?] == 1 ? "PRIMARY KEY":"")
+      if pk_stat  == "PRIMARY KEY"
+        table_schema += "(#{col_name}: [#{col_info[:type]}, #{null_stat}, #{pk_stat}]),"
+      else
+        table_schema += "(#{col_name}: [#{col_info[:type]}, #{null_stat}]),"
+      end
+    }
+    table_schema.chomp!(',')
+    table_schema += ")"
+    return table_schema
   end
 end
