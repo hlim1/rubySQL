@@ -12,9 +12,8 @@ class RubySQL::Insert
   # Params:
   # - table_name (str): Table name
   # - values (array): An array that holds values.
-  # - query_file (file): A file object that executed query will be stored.
   # - mem_db (hash) : Memory loaded database object.
-  def sqlite3_insert(table_name, values, query_file, mem_db)
+  def sqlite3_insert(table_name, values, mem_db)
     RubySQL::Assert.check_table_name(table_name, @dbh)
 
     table_ast = Hash.new
@@ -61,10 +60,6 @@ class RubySQL::Insert
       vl_index += 1
     }
 
-    column_to_value.each {|col_name, value|
-      puts "#{col_name}, #{value}"
-    }
-
     insert_query = "INSERT INTO #{table_name} ("
     column_to_value.each_key {|col_name|
       insert_query += "#{col_name},"
@@ -82,6 +77,6 @@ class RubySQL::Insert
     insert_query += ');'
 
     @dbh.execute(insert_query)
-    query_file.write(insert_query+"\n")
+    return insert_query + "\n"
   end
 end
