@@ -86,12 +86,12 @@ class RubySQL
     msg += "Syntax: with (['column_name' => ['type', 'null?'])"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
 
-    columns.each {
+    columns.each {|col| 
       status = col.class == Hash  
       msg = "Error: 'with(__columns__)' must receive array of <hashes>.\n"
       msg += "Syntax: with (['column_name' => ['type', 'null?'])"
       RubySQL::Assert.default_error_check(status, msg, @dbh)
-      |col| @table[:columns].push(col)
+      @table[:columns].push(col)
     }
     self
   end
