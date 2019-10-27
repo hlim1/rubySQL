@@ -21,11 +21,10 @@ class RubySQL::Create
   # - columns (list): A list of hashes that holds column info.
   # - primary_key (str): A column name that will be set to primary key.
   # - if_not_exist (str): It tells whether the user wants to execute create.
-  # - query_file (file): A file object that executed query will be stored.
   # operation even if the table exists or not.
   # Returns:
-  # - None
-  def sqlite3_create_tb(table_name, columns, primary_key, if_not_exist, query_file)
+  # - create_query (str): Successfully executed create table query.
+  def sqlite3_create_tb(table_name, columns, primary_key, if_not_exist)
     if if_not_exist.downcase == "n"
       status = @dbm.table_exist?(table_name)
       RubySQL::Assert.table_already_exist(status, table_name, @dbh)
@@ -57,7 +56,7 @@ class RubySQL::Create
     create_query = "CREATE TABLE IF NOT EXISTS #{table_name} #{table_spec_str};"
     @dbh.execute(create_query)
 
-    query_file.write(create_query+"\n")
+    return create_query + "\n"
   end
 
   # Prints out the schema of specified table.
