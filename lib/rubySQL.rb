@@ -19,14 +19,14 @@ class RubySQL
   # Returns:
   # - None
   def connect(db_name)
-    @db  = Connection.new(db_name)                # Connect to <db_name> database
-    @dbh = @db.connect_sqlite3
-    @dbm = DBManager.new(@dbh)                    # Initialize database manageer
-    @db_ast = @dbm.create_ast                     # Create DB AST
-    @mem_db = @dbm.load_tables                    # Load data on to memory from the DB
+    @db         = Connection.new(db_name)         # Connect to <db_name> database
+    @dbh        = @db.connect_sqlite3
+    @dbm        = DBManager.new(@dbh)             # Initialize database manageer
+    @db_ast     = @dbm.create_ast                 # Create DB AST
+    @mem_db     = @dbm.load_tables                # Load data on to memory from the DB
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
     @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
-    @query_file = File.new("Queries.txt", "w+")   # Open a file that will store all executed queries
+    @queries    = String.new                      # On memory query holder
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -45,6 +45,9 @@ class RubySQL
   # - None
   def close
     @db.sqlite3_close
+    # At close, flush all the executed SQL queries into a file.
+    query_file = File.new("Queries.txt", "w")
+    query_file.write(@queries)
   end
 
   # Creates an AST skeleton that will be populated with the user input
@@ -78,7 +81,18 @@ class RubySQL
   # - columns (array): Array of hash holding table column info from the user
   # Returns: None
   def with(columns)
-    columns.each {|col| @table[:columns].push(col)}
+    status = columns.class == Array
+    msg = "Error: 'with(__columns__)' must receive <array> of hashes.\n"
+    msg += "Syntax: with (['column_name' => ['type', 'null?'])"
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+
+    columns.each {
+      status = col.class == Hash  
+      msg = "Error: 'with(__columns__)' must receive array of <hashes>.\n"
+      msg += "Syntax: with (['column_name' => ['type', 'null?'])"
+      RubySQL::Assert.default_error_check(status, msg, @dbh)
+      |col| @table[:columns].push(col)
+    }
     self
   end
 
@@ -91,13 +105,12 @@ class RubySQL
   # - None
   def primary(column)
     @table[:primary_key] = column
-    @tb_creator.sqlite3_create_tb(
-      @table[:table_name], 
-      @table[:columns], 
-      @table[:primary_key],
-      @table[:if_not_exist],
-      @query_file
-    )
+    @queries += @tb_creator.sqlite3_create_tb(
+                  @table[:table_name], 
+                  @table[:columns], 
+                  @table[:primary_key],
+                  @table[:if_not_exist],
+                )
   end
 
   # Call sqlite3_schema method from create.rb to print the table schema.
@@ -135,7 +148,7 @@ class RubySQL
   # - table_name (str): Table name
   def into(table_name)
     @insert[:table_name] = table_name
-    @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @query_file, @mem_db)
+    @queries += @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @mem_db)
   end
 
   # Drops specified table from the database
