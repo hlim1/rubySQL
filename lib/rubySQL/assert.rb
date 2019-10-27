@@ -135,15 +135,31 @@ class RubySQL::Assert
   def self.check_column_value(cur_column_in_table, value, mem_db, dbh)
     col_name = cur_column_in_table[0]
     col_type = cur_column_in_table[1][:type]
-    col_pk_stat = cur_column_in_table[1][:pk?]
-    status = 1
+    if cur_column_in_table[1][:pk?] == 1
+      uniqueness = 1
+    else
+      uniqueness = 0
+    end
+
+    status = check_column_type(col_type, value)
+    msg = "Error: Column <#{col_name}> type is #{col_type}.\n"
+    msg += "User input value type is <#{value.class}>."
+    default_error_check(status, msg, dbh)
+
+    status = check_column_uniqueness(col_name, mem_db, uniqueness, value)
+    msg = "Error: All values in column <#{col_name}>must be unique.\n"
+    msg += "User input value <#{value}> already exist."
+    default_error_check(status, msg, dbh)
+  end
+
+  def self.check_column_type(col_type, value)
     # TODO: Type check for BLOB
     if (
         (col_type.upcase == "INT"\
          or col_type.upcase == "INTEGER")\
         and value.class != Integer\
     )
-      status = 0
+      return 0
     elsif (
         (col_type.upcase == "TEXT" \
          or col_type.upcase.include? "CHAR"\
@@ -151,7 +167,7 @@ class RubySQL::Assert
          or col_type.upcase.include? "VARCHAR")\
         and value.class != String\
     )
-      status = 0
+      return 0
     elsif (
         (col_type.upcase == "REAL"\
          or col_type.upcase == "DOUBLE"\
@@ -159,27 +175,26 @@ class RubySQL::Assert
          or col_type.upcase  == "FLOAT")\
         and value.class != Float\
     )
-      status = 0
+      return 0
     elsif (
         col_type.upcase == "BOOL"\
         and (value.class != TrueClass\
              or value.class != FalseClass)\
     )
-      status == 0
+      return 0
     end
 
-    msg = "Error: Column #{col_name} type is #{col_type}.\n"
-    msg += "User input value type is #{value.class}."
-    default_error_check(status, msg, dbh)
+    return 1
+  end
 
-    if col_pk_stat == 1
+  def self.check_column_uniqueness(col_name, mem_db, uniqueness, value)
+    if uniqueness == 1
       values_in_columns = mem_db[col_name]
       if values_in_columns.include? value
-        status = 0
+        return 0
       end
     end
 
-    msg = "Error: All values in column #{col_name} must be unique."
-    default_error_check(status, msg, dbh)
+    return 1
   end
 end
