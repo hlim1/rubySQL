@@ -168,10 +168,18 @@ class RubySQL::Assert
       status == 0
     end
 
-    if status == 0  
-      msg = "Error: Column #{col_name} type is #{col_type}.\n"
-      msg += "User input value type is #{value.class}."
-      default_error_check(0, msg, dbh)
+    msg = "Error: Column #{col_name} type is #{col_type}.\n"
+    msg += "User input value type is #{value.class}."
+    default_error_check(status, msg, dbh)
+
+    if col_pk_stat == 1
+      values_in_columns = mem_db[col_name]
+      if values_in_columns.include? value
+        status = 0
+      end
     end
+
+    msg = "Error: All values in column #{col_name} must be unique."
+    default_error_check(status, msg, dbh)
   end
 end
