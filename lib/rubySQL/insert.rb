@@ -60,10 +60,6 @@ class RubySQL::Insert
       vl_index += 1
     }
 
-    column_to_value.each {|col_name, value|
-      puts "#{col_name}, #{value}"
-    }
-
     insert_query = "INSERT INTO #{table_name} ("
     column_to_value.each_key {|col_name|
       insert_query += "#{col_name},"
