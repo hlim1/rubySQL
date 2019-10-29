@@ -202,7 +202,9 @@ class RubySQL
     msg += "User provided #{columns.class}"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
     @select[:columns] = columns
-    @selector.select(@select)
+    returned_rows, select_query = @selector.select(@select, @mem_db)
+    @queries = select_query
+    return returned_rows
   end
 
   # This is just for debugging purpose.

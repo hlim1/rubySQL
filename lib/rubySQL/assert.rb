@@ -12,6 +12,27 @@ class RubySQL::Assert
     "BLOB", "BOOL"
   ]
 
+  # Reserved SQL keywords
+  @reserved_keywords = [
+    "*"
+  ]
+
+  # Check for the passed status and print out error message
+  # and  terminate the program or do nothing.
+  # Params:
+  # - status (int): 1 (or true) for success or 0 (or false) for fail.
+  # - msg (str): Error message to be printed out in case of fail.
+  # - dbh (DB obj): Database handlerfor closing the DB.
+  # Returns:
+  # - None.
+  def self.default_error_check(status, msg, dbh)
+    if status == 0 or status == false
+      puts msg
+      dbh.close if dbh
+      exit
+    end
+  end
+
   # Checks validity of database name that was input from the user.
   # Database name must be a string type. Error and exit otherwise.
   # Params:
@@ -56,15 +77,6 @@ class RubySQL::Assert
       dbh.close if dbh
       exit
     end
-
-    #tables = dbh.execute("select * from sqlite_master where type='table';")
-    #tables.each {|table|
-      #if table_name == table[1]
-        #printf "Error: Table #{table_name} already exist.\n"
-        #dbh.close if dbh
-        #exit
-      #end
-    #}
   end
 
   # Assert for user trying to access none existing table in the database.
@@ -116,22 +128,15 @@ class RubySQL::Assert
     end
   end
 
-  # Check for the passed status and print out error message
-  # and  terminate the program or do nothing.
+  # Checks user input value to the DB table column. It performs checks
+  # on duplicate data, value type.
   # Params:
-  # - status (int): 1 (or true) for success or 0 (or false) for fail.
-  # - msg (str): Error message to be printed out in case of fail.
-  # - dbh (DB obj): Database handlerfor closing the DB.
+  # - cur_column_in_table (array): Column information that currently dealing with.
+  # - value (varies): User input value for the current column,
+  # - mem_db (hash): Memory loaded database.
+  # - dbh (obj): Database handler.
   # Returns:
-  # - None.
-  def self.default_error_check(status, msg, dbh)
-    if status == 0 or status == false
-      puts msg
-      dbh.close if dbh
-      exit
-    end
-  end
-
+  # - None
   def self.check_column_value(cur_column_in_table, value, mem_db, dbh)
     col_name = cur_column_in_table[0]
     col_type = cur_column_in_table[1][:type]
@@ -140,12 +145,15 @@ class RubySQL::Assert
     else
       uniqueness = 0
     end
-
+    
+    # Checks user input value type compare to the column in the DB table.
     status = check_column_type(col_type, value)
     msg = "Error: Column <#{col_name}> type is #{col_type}.\n"
     msg += "User input value type is <#{value.class}>."
     default_error_check(status, msg, dbh)
 
+    # Checks whether user's value already exists in the DB table column.
+    # Error if the column is not allowed for duplicate data.
     status = check_column_uniqueness(col_name, mem_db, uniqueness, value)
     msg = "Error: All values in column <#{col_name}>must be unique.\n"
     msg += "User input value <#{value}> already exist."
@@ -196,5 +204,38 @@ class RubySQL::Assert
     end
 
     return 1
+  end
+
+  # Checks the validity of select query's column.
+  # Params:
+  # - table_name (str): Table name.
+  # - column (str): Column name.
+  # - table_ast (hash): Table ast that holds column name to column info mapping.
+  # - dbh (obj): Database handler.
+  # Returns:
+  def self.select_column_check(table_name, columns, table_ast, dbh)
+    columns.each {|column|
+      if column == "*"
+        status = columns.length == 1
+        msg = "Error: * (all) cannot be used with other column names\n"
+        msg += "Selected columns: #{columns}. # of selected columns: #{columns.length}"
+        default_error_check(status, msg, dbh)
+      end
+    } 
+
+  end
+
+  # Checks whether the column that user trying to access exists in the table or not.
+  # Params:
+  # - table_name (str): Table name.
+  # - column (str): Column name.
+  # - table_ast (hash): Table ast that holds column name to column info mapping.
+  # - dbh (obj): Database handler.
+  # Returns:
+  # - None.
+  def column_exist(table_name, column, table_ast, dbh)
+    status = table_ast.include?(column)
+    msg = "Error: Column #{column} does not exist in table #{table_name}."
+    default_error_check(status, msg, dbh)
   end
 end
