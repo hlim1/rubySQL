@@ -10,13 +10,13 @@ def main
   rbsql.version
 
   # rbsql.create_table("COMPANY",__if_not_exist__="N").with([["__type__", "__column_name__", "__nullable__"],...,]).primary_key(__column_name__)
-  rbsql.create_table("COMPANY_A", "Y").with([
+  rbsql.create_table("COMPANY_A", "Y").with_columns([
     "ID" => ["INT", "NO"], "NAME" => ["TEXT", "NO"], 
     "AGE" => ["INT", "NO"], "ADDRESS" => ["TEXT", "YES"], 
     "SALARY" => ["REAL", "YES"]
   ]).primary("ID")
 
-  rbsql.create_table("COMPANY_B", "Y").with([
+  rbsql.create_table("COMPANY_B", "Y").with_columns([
     "ID" => ["INT", "NO"], "NAME" => ["TEXT", "NO"], 
     "AGE" => ["INT", "NO"], "ADDRESS" => ["TEXT", "YES"], 
     "SALARY" => ["REAL", "YES"]
