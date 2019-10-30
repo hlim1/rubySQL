@@ -213,7 +213,7 @@ class RubySQL
   # Returns:
   # - returned_rows (array): Array of hashes that holds each row data.
   def select_all(table_name)
-    returned_rows, select_all_query =  @selector.sqlite_select_all(table_name)
+    returned_rows, select_all_query =  @selector.sqlite3_select_all(table_name)
     @queries = select_all_query
     return returned_rows
   end
