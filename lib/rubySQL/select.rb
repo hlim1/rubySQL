@@ -17,7 +17,7 @@ class RubySQL::Select
   # Returns:
   # - returned_rows (array of hash): Returned rows from DB.
   # - select_query (str): Constructed query that was successfully pushed to DB.
-  def select(select_ast, mem_db)
+  def sqlite3_select(select_ast, mem_db)
     table_name = select_ast[:table_name]
     RubySQL::Assert.check_table_name(table_name, @dbh)
 
@@ -39,8 +39,19 @@ class RubySQL::Select
     return returned_rows, select_query + "\n"
   end
 
-  def select_all(table_name)
-
+  # Simply query on database for all data in table and return the returned rows
+  # from the database.
+  # Params:
+  # - table_name (str): Table name.
+  # Returns:
+  # - returned_rows (array of hash): Returned rows from DB.
+  # - select_all_query (str): Constructed query that was successfully pushed to DB.
+  def sqlite3_select_all(table_name)
+    # get_table_ast does the table existence check.
+    table_ast = @dbm.get_table_ast(table_name)
+    select_all_query = "SELECT * FROM #{table_name};"
+    returned_rows = @dbh.execute(select_all_query)
+    return returned_rows, select_all_query + "\n"
   end
 
   def get_pk(table_name)

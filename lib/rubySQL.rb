@@ -26,6 +26,7 @@ class RubySQL
     @mem_db     = @dbm.load_tables                # Load data on to memory from the DB
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
     @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
+    @selector = Select.new(@dbh, @dbm)
     @queries    = String.new                      # On memory query holder
   end
 
@@ -172,7 +173,6 @@ class RubySQL
   # - table_name (str): Table name
   def select_from(table_name)
     RubySQL::Assert.check_table_name(table_name, @dbh)
-    @selector = Select.new(@dbh, @dbm)
     @select = {
       :columns => [],
       :table_name => table_name,
@@ -202,11 +202,22 @@ class RubySQL
     msg += "User provided #{columns.class}"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
     @select[:columns] = columns
-    returned_rows, select_query = @selector.select(@select, @mem_db)
+    returned_rows, select_query = @selector.sqlite3_select(@select, @mem_db)
     @queries = select_query
     return returned_rows
   end
 
+  # Get all data in the user specified table and return the rows.
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - returned_rows (array): Array of hashes that holds each row data.
+  def select_all(table_name)
+    returned_rows, select_all_query =  @selector.sqlite_select_all(table_name)
+    @queries = select_all_query
+    return returned_rows
+  end
+  
   # This is just for debugging purpose.
   def print
     puts @table
