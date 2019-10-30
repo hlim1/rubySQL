@@ -26,6 +26,7 @@ class RubySQL
     @mem_db     = @dbm.load_tables                # Load data on to memory from the DB
     @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
     @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
+    @selector = Select.new(@dbh, @dbm)
     @queries    = String.new                      # On memory query holder
   end
 
@@ -80,7 +81,7 @@ class RubySQL
   # Params:
   # - columns (array): Array of hash holding table column info from the user
   # Returns: None
-  def with(columns)
+  def with_columns(columns)
     status = columns.class == Array
     msg = "Error: 'with(__columns__)' must receive <array> of hashes.\n"
     msg += "Syntax: with (['column_name' => ['type', 'null?'])"
@@ -135,6 +136,10 @@ class RubySQL
   # Params:
   # - values (array): An array that holds values.
   def insert(values)
+    status = columns.class == Array
+    msg = "Error: insert() must receive a string(s) of array as argument.\n"
+    msg += "User provided #{columns.class}"
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
     @insert = {
       :table_name => "",
       :values => values
@@ -146,17 +151,73 @@ class RubySQL
   # It calls sqlite3_insert method from insert.rb.
   # Params:
   # - table_name (str): Table name
+  # Returns:
+  # - None
   def into(table_name)
     @insert[:table_name] = table_name
     @queries += @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @mem_db)
   end
 
-  # Drops specified table from the database
+  # Drops specified table from the database.
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - None
   def drop_table(table_name)
     @dropper = Drop.new(@dbh, @dbm, @db_ast)
     @dropper.drop_table(table_name)
   end
 
+  # Create select AST structure with a user provided table_name.
+  # Params:
+  # - table_name (str): Table name
+  def select_from(table_name)
+    RubySQL::Assert.check_table_name(table_name, @dbh)
+    @select = {
+      :columns => [],
+      :table_name => table_name,
+      :condition => ""
+    }
+    self
+  end
+
+  # Updates @select hash's condition field.
+  # Params:
+  # - condition (str): Condition in String
+  # Returns:
+  # - None
+  def with_condition(condition)
+    @select[:condition] = condition
+    self
+  end
+
+  # Updates @select hash's columns field.
+  # Params:
+  # - columns (array): Array of strings that hold column names
+  # Returns:
+  # - None
+  def on_columns(columns)
+    status = columns.class == Array
+    msg = "Error: select() must receive a string(s) of array as argument.\n"
+    msg += "User provided #{columns.class}"
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @select[:columns] = columns
+    returned_rows, select_query = @selector.sqlite3_select(@select, @mem_db)
+    @queries = select_query
+    return returned_rows
+  end
+
+  # Get all data in the user specified table and return the rows.
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - returned_rows (array): Array of hashes that holds each row data.
+  def select_all(table_name)
+    returned_rows, select_all_query =  @selector.sqlite3_select_all(table_name)
+    @queries = select_all_query
+    return returned_rows
+  end
+  
   # This is just for debugging purpose.
   def print
     puts @table
@@ -168,4 +229,5 @@ require 'rubySQL/assert'
 require 'rubySQL/create'
 require 'rubySQL/insert'
 require 'rubySQL/drop'
+require 'rubySQL/select'
 require 'rubySQL/db_manager'
