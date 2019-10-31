@@ -19,15 +19,15 @@ class RubySQL
   # Returns:
   # - None
   def connect(db_name)
-    @db         = Connection.new(db_name)         # Connect to <db_name> database
-    @dbh        = @db.connect_sqlite3
-    @dbm        = DBManager.new(@dbh)             # Initialize database manageer
-    @db_ast     = @dbm.create_ast                 # Create DB AST
-    @mem_db     = @dbm.load_tables                # Load data on to memory from the DB
-    @tb_creator = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
-    @insert_hd  = Insert.new(@dbh, @dbm)          # Initialize insert handler
-    @selector = Select.new(@dbh, @dbm)
-    @queries    = String.new                      # On memory query holder
+    @db                       = Connection.new(db_name)         # Connect to <db_name> database
+    @dbh                      = @db.connect_sqlite3
+    @dbm                      = DBManager.new(@dbh)             # Initialize database manageer
+    @db_ast                   = @dbm.create_ast                 # Create DB AST
+    @mem_db_col, @mem_db_row  = @dbm.load_tables                # Load data on to memory from the DB
+    @tb_creator               = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
+    @insert_hd                = Insert.new(@dbh, @dbm)          # Initialize insert handler
+    @selector                 = Select.new(@dbh, @dbm)
+    @queries                  = String.new                      # On memory query holder
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -209,13 +209,22 @@ class RubySQL
 
   # Get all data in the user specified table and return the rows.
   # Params:
-  # - table_name (str): Table name
+  # - table_name (str): Table name.
+  # - direction (str): Row or Column that user can specify to retrieve data. (Default: Row)
   # Returns:
-  # - returned_rows (array): Array of hashes that holds each row data.
-  def select_all(table_name)
-    returned_rows, select_all_query =  @selector.sqlite3_select_all(table_name)
+  # - returned_data (array): Array of hashes that holds each row data or column data.
+  def select_all(table_name, direction="row")
+    if direction == "row"
+      returned_data, select_all_query =  @selector.sqlite3_select_all(table_name, @mem_db_row, direction)
+    elsif direction == "col"
+      returned_data, select_all_query =  @selector.sqlite3_select_all(table_name, @mem_db_col, direction)
+    else
+      msg = "Error: Invalid direction input: #{direction}."
+      msg += "Direction must be a string either 'row' or 'col'."
+      RubySQL::Assert.default_error_check(0, msg, @dbh)
+    end
     @queries = select_all_query
-    return returned_rows
+    return returned_data
   end
   
   # This is just for debugging purpose.

@@ -30,7 +30,8 @@ class RubySQL::DBManager
     #         ...
     #     },
     #   }
-    @mem_database = Hash.new
+    @mem_db_col = Hash.new
+    @mem_db_row = Hash.new
   end
 
   # Construct database abstract syntax tree.
@@ -69,6 +70,7 @@ class RubySQL::DBManager
       columns = Hash.new
       column_names = @table_ast[table].keys
       rows = @dbh.execute("SELECT * FROM #{table}")
+      @mem_db_row[table] = rows
       column_names.each {|col|
         col_data = Array.new
         rows.each {|data|
@@ -76,9 +78,9 @@ class RubySQL::DBManager
         }
         columns[col] = col_data
       }
-      @mem_database[table] = columns
+      @mem_db_col[table] = columns
     }
-    return @mem_database
+    return @mem_db_col, @mem_db_row
   end
 
   # Update AST when UPDATE and DROP.
