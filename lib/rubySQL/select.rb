@@ -43,15 +43,16 @@ class RubySQL::Select
   # from the database.
   # Params:
   # - table_name (str): Table name.
+  # - direction (str): Row or Column that user can specify to retrieve data.
   # Returns:
   # - returned_rows (array of hash): Returned rows from DB.
   # - select_all_query (str): Constructed query that was successfully pushed to DB.
-  def sqlite3_select_all(table_name)
+  def sqlite3_select_all(table_name, mem_db, direction)
     # get_table_ast does the table existence check.
     table_ast = @dbm.get_table_ast(table_name)
+    returned_data = mem_db[table_name]
     select_all_query = "SELECT * FROM #{table_name};"
-    returned_rows = @dbh.execute(select_all_query)
-    return returned_rows, select_all_query + "\n"
+    return returned_data, select_all_query + "\n"
   end
 
   def get_pk(table_name)

@@ -13,6 +13,8 @@ class RubySQL::Insert
   # - table_name (str): Table name
   # - values (array): An array that holds values.
   # - mem_db (hash) : Memory loaded database object.
+  # Returns:
+  # - insert_query (str): Constructed query that was successfully pushed to DB.
   def sqlite3_insert(table_name, values, mem_db)
     RubySQL::Assert.check_table_name(table_name, @dbh)
 
