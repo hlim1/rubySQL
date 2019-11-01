@@ -50,7 +50,7 @@ class RubySQL::DBManager
           # schema:
           # 0 := CID (int), 1 := table name (str), 2 := type (str),
           # 3 := null? (int, 1: Null. 0: Not-null)
-          # 5 := PK? (int, 1: Null. 0: Not-null)
+          # 5 := PK? (int, 1: PK. 0: Not-PK)
           column_info[schema[1]] = {:type => schema[2], :null? => schema[3], :pk? => schema[5]}
         }
         @table_ast[table[1]] = column_info

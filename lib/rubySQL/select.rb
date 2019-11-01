@@ -48,6 +48,7 @@ class RubySQL::Select
   # - returned_rows (array of hash): Returned rows from DB.
   # - select_all_query (str): Constructed query that was successfully pushed to DB.
   def sqlite3_select_all(table_name, mem_db, direction)
+    RubySQL::Assert.check_table_name(table_name, @dbh)
     # get_table_ast does the table existence check.
     table_ast = @dbm.get_table_ast(table_name)
     returned_data = mem_db[table_name]
@@ -55,11 +56,23 @@ class RubySQL::Select
     return returned_data, select_all_query + "\n"
   end
 
-  def get_pk(table_name)
-
+  # It will return the primary key column name of table.
+  # Params:
+  # - table_name (str): Table name.
+  # Returns:
+  # - column_name (str): Column name that is a primary key of table.
+  def sqlite3_get_pk(table_name)
+    RubySQL::Assert.check_table_name(table_name, @dbh)
+    table_ast = @dbm.get_table_ast(table_name)
+    table_ast.each {|column_name, column_info|
+      if column_info[2] == 1
+        return column_name
+    }
+    msg = "Internal Error: Primary key was not set properly."
+    RubySQL::Assert.deault_error_check(0, msg, @dbh)
   end
 
-  def get_fk(table_name)
+  def sqlite3_get_fk(table_name)
 
   end
 end

@@ -226,6 +226,15 @@ class RubySQL
     @queries = select_all_query
     return returned_data
   end
+
+  # Get a primary key of a table and return the column name.
+  # Params:
+  # - table_name (str): Table name.
+  # Returns:
+  # - column_name (str): Primary key column name.
+  def get_pk(table_name)
+    return @select.sqlite3_get_pk(table_name)
+  end
   
   # This is just for debugging purpose.
   def print
