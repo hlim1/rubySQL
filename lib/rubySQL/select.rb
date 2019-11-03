@@ -29,13 +29,17 @@ class RubySQL::Select
 
     columns.each {|col|
       if col == "*"
-        columns_to_select = "*"
+        return sqlite3_select_all(table_name, mem_db)
       end
+      columns_to_select += "#{columns},"
     }
-
+    columns_to_select.chomp(',')
     select_query = "SELECT #{columns_to_select} FROM #{table_name};"
-    returned_rows = @dbh.execute(select_query)
-
+    returned_rows = Array.new
+    columns.each {|col|
+      returned_rows.push(mem_db[table_name][col]
+    }
+    
     return returned_rows, select_query + "\n"
   end
 

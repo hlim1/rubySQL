@@ -171,12 +171,18 @@ class RubySQL
   # Create select AST structure with a user provided table_name.
   # Params:
   # - table_name (str): Table name
-  def select_from(table_name)
+  def select_from(table_name, direction="row")
     RubySQL::Assert.check_table_name(table_name, @dbh)
+    status = direction == "row" or direction == "col"
+    msg = "Error: direction must be either 'row' or 'col'."
+    msg += "User input #{dirction}."
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+
     @select = {
       :columns => [],
       :table_name => table_name,
-      :condition => ""
+      :condition => "",
+      :direction => direction
     }
     self
   end
@@ -202,7 +208,11 @@ class RubySQL
     msg += "User provided #{columns.class}"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
     @select[:columns] = columns
-    returned_rows, select_query = @selector.sqlite3_select(@select, @mem_db)
+    if @select[:direction] == "row"
+      mem_db = @mem_db_row
+    else:
+      mem_db = @mem_db_col
+    returned_rows, select_query = @selector.sqlite3_select(@select, mem_db)
     @queries = select_query
     return returned_rows
   end
