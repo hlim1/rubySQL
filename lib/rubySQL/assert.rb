@@ -221,8 +221,8 @@ class RubySQL::Assert
         msg += "Selected columns: #{columns}. # of selected columns: #{columns.length}"
         default_error_check(status, msg, dbh)
       end
+      column_exist(table_name, column, table_ast, dbh)
     } 
-
   end
 
   # Checks whether the column that user trying to access exists in the table or not.
@@ -233,7 +233,7 @@ class RubySQL::Assert
   # - dbh (obj): Database handler.
   # Returns:
   # - None.
-  def column_exist(table_name, column, table_ast, dbh)
+  def self.column_exist(table_name, column, table_ast, dbh)
     status = table_ast.include?(column)
     msg = "Error: Column #{column} does not exist in table #{table_name}."
     default_error_check(status, msg, dbh)

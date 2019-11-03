@@ -29,14 +29,30 @@ class RubySQL::Select
 
     columns.each {|col|
       if col == "*"
-        columns_to_select = "*"
+        return sqlite3_select_all(table_name, mem_db)
       end
+      columns_to_select += "#{col},"
     }
-
+    columns_to_select.chomp(',')
     select_query = "SELECT #{columns_to_select} FROM #{table_name};"
-    returned_rows = @dbh.execute(select_query)
 
-    return returned_rows, select_query + "\n"
+    if select_ast[:direction] == "row"
+      returned_rows = Array.new
+      mem_db[table_name].each {|rows|
+        row = Hash.new
+        columns.each {|col_n|
+          row[col_n] = rows[col_n]
+        }
+        returned_rows.push(row)
+      }
+      return returned_rows, select_query + "\n"
+    else
+      returned_cols = Hash.new
+      columns.each {|col|
+        returned_cols[col] = mem_db[table_name][col]
+      }
+      return returned_cols, select_query + "\n"
+    end
   end
 
   # Simply query on database for all data in table and return the returned rows
@@ -48,6 +64,7 @@ class RubySQL::Select
   # - returned_rows (array of hash): Returned rows from DB.
   # - select_all_query (str): Constructed query that was successfully pushed to DB.
   def sqlite3_select_all(table_name, mem_db, direction)
+    RubySQL::Assert.check_table_name(table_name, @dbh)
     # get_table_ast does the table existence check.
     table_ast = @dbm.get_table_ast(table_name)
     returned_data = mem_db[table_name]
@@ -55,11 +72,24 @@ class RubySQL::Select
     return returned_data, select_all_query + "\n"
   end
 
-  def get_pk(table_name)
-
+  # It will return the primary key column name of table.
+  # Params:
+  # - table_name (str): Table name.
+  # Returns:
+  # - column_name (str): Column name that is a primary key of table.
+  def sqlite3_get_pk(table_name)
+    RubySQL::Assert.check_table_name(table_name, @dbh)
+    table_ast = @dbm.get_table_ast(table_name)
+    table_ast.each {|column_name, column_info|
+      if column_info[2] == 1
+        return column_name
+      end
+    }
+    msg = "Internal Error: Primary key was not set properly."
+    RubySQL::Assert.deault_error_check(0, msg, @dbh)
   end
 
-  def get_fk(table_name)
+  def sqlite3_get_fk(table_name)
 
   end
 end

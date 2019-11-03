@@ -171,12 +171,19 @@ class RubySQL
   # Create select AST structure with a user provided table_name.
   # Params:
   # - table_name (str): Table name
-  def select_from(table_name)
+  # - directions (str): Direction that user wants to retrieve by.
+  def select_from(table_name, direction="row")
     RubySQL::Assert.check_table_name(table_name, @dbh)
+    status = (direction.class == String and (direction == "row" or direction == "col"))
+    msg = "Error: direction must be either 'row' or 'col'.\n"
+    msg += "User input #{direction}."
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+
     @select = {
       :columns => [],
       :table_name => table_name,
-      :condition => ""
+      :condition => "",
+      :direction => direction
     }
     self
   end
@@ -202,8 +209,13 @@ class RubySQL
     msg += "User provided #{columns.class}"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
     @select[:columns] = columns
-    returned_rows, select_query = @selector.sqlite3_select(@select, @mem_db)
-    @queries = select_query
+    if @select[:direction] == "row"
+      mem_db = @mem_db_row
+    else
+      mem_db = @mem_db_col
+    end
+    returned_rows, select_query = @selector.sqlite3_select(@select, mem_db)
+    @queries += select_query
     return returned_rows
   end
 
@@ -225,6 +237,15 @@ class RubySQL
     end
     @queries = select_all_query
     return returned_data
+  end
+
+  # Get a primary key of a table and return the column name.
+  # Params:
+  # - table_name (str): Table name.
+  # Returns:
+  # - column_name (str): Primary key column name.
+  def get_pk(table_name)
+    return @select.sqlite3_get_pk(table_name)
   end
   
   # This is just for debugging purpose.
