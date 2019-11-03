@@ -171,9 +171,10 @@ class RubySQL
   # Create select AST structure with a user provided table_name.
   # Params:
   # - table_name (str): Table name
+  # - directions (str): Direction that user wants to retrieve by.
   def select_from(table_name, direction="row")
     RubySQL::Assert.check_table_name(table_name, @dbh)
-    status = (direction == "row" or direction == "col")
+    status = (direction.class == String and (direction == "row" or direction == "col"))
     msg = "Error: direction must be either 'row' or 'col'.\n"
     msg += "User input #{direction}."
     RubySQL::Assert.default_error_check(status, msg, @dbh)
