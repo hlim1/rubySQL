@@ -173,9 +173,9 @@ class RubySQL
   # - table_name (str): Table name
   def select_from(table_name, direction="row")
     RubySQL::Assert.check_table_name(table_name, @dbh)
-    status = direction == "row" or direction == "col"
-    msg = "Error: direction must be either 'row' or 'col'."
-    msg += "User input #{dirction}."
+    status = (direction == "row" or direction == "col")
+    msg = "Error: direction must be either 'row' or 'col'.\n"
+    msg += "User input #{direction}."
     RubySQL::Assert.default_error_check(status, msg, @dbh)
 
     @select = {
@@ -210,8 +210,9 @@ class RubySQL
     @select[:columns] = columns
     if @select[:direction] == "row"
       mem_db = @mem_db_row
-    else:
+    else
       mem_db = @mem_db_col
+    end
     returned_rows, select_query = @selector.sqlite3_select(@select, mem_db)
     @queries = select_query
     return returned_rows

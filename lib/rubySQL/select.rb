@@ -35,12 +35,24 @@ class RubySQL::Select
     }
     columns_to_select.chomp(',')
     select_query = "SELECT #{columns_to_select} FROM #{table_name};"
-    returned_rows = Array.new
-    columns.each {|col|
-      returned_rows.push(mem_db[table_name][col]
-    }
-    
-    return returned_rows, select_query + "\n"
+
+    if select_ast[:direction] == "row"
+      returned_rows = Array.new
+      mem_db[table_name].each {|rows|
+        row = Hash.new
+        columns.each {|col_n|
+          row[col_n] = rows[col_n]
+        }
+        returned_rows.push(row)
+      }
+      return returned_rows, select_query + "\n"
+    else
+      returned_cols = Hash.new
+      columns.each {|col|
+        returned_cols[col] = mem_db[table_name][col]
+      }
+      return returned_cols, select_query + "\n"
+    end
   end
 
   # Simply query on database for all data in table and return the returned rows
@@ -71,6 +83,7 @@ class RubySQL::Select
     table_ast.each {|column_name, column_info|
       if column_info[2] == 1
         return column_name
+      end
     }
     msg = "Internal Error: Primary key was not set properly."
     RubySQL::Assert.deault_error_check(0, msg, @dbh)

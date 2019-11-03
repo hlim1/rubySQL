@@ -221,7 +221,7 @@ class RubySQL::Assert
         msg += "Selected columns: #{columns}. # of selected columns: #{columns.length}"
         default_error_check(status, msg, dbh)
       end
-      column_exist(table_name, columns, table_ast, dbh)
+      column_exist(table_name, column, table_ast, dbh)
     } 
   end
 
