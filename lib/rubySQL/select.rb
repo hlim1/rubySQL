@@ -31,7 +31,7 @@ class RubySQL::Select
       if col == "*"
         return sqlite3_select_all(table_name, mem_db)
       end
-      columns_to_select += "#{columns},"
+      columns_to_select += "#{col},"
     }
     columns_to_select.chomp(',')
     select_query = "SELECT #{columns_to_select} FROM #{table_name};"

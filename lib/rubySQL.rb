@@ -215,7 +215,7 @@ class RubySQL
       mem_db = @mem_db_col
     end
     returned_rows, select_query = @selector.sqlite3_select(@select, mem_db)
-    @queries = select_query
+    @queries += select_query
     return returned_rows
   end
 
