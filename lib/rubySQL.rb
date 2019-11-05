@@ -9,6 +9,8 @@ class RubySQL
   # @dbm: Database manager.
 
   def initialize
+    @select_in_progress = false
+    @update_in_progress = false
   end
 
   # Initializes @db, @dbh, @tb_creator, insert_hd objects.
@@ -26,7 +28,8 @@ class RubySQL
     @mem_db_col, @mem_db_row  = @dbm.load_tables                # Load data on to memory from the DB
     @tb_creator               = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
     @insert_hd                = Insert.new(@dbh, @dbm)          # Initialize insert handler
-    @selector                 = Select.new(@dbh, @dbm)
+    @selector                 = Select.new(@dbh, @dbm)          # Initialize select handler
+    @updator                  = Update.new(@dbh, @dbm)          # Initialize update handler
     @queries                  = String.new                      # On memory query holder
   end
 
@@ -173,6 +176,7 @@ class RubySQL
   # - table_name (str): Table name
   # - directions (str): Direction that user wants to retrieve by.
   def select_from(table_name, direction="row")
+    @select_in_progress = true
     RubySQL::Assert.check_table_name(table_name, @dbh)
     status = (direction.class == String and (direction == "row" or direction == "col"))
     msg = "Error: direction must be either 'row' or 'col'.\n"
@@ -182,19 +186,28 @@ class RubySQL
     @select = {
       :columns => [],
       :table_name => table_name,
-      :condition => "",
+      :condition => [],
       :direction => direction
     }
     self
   end
 
-  # Updates @select hash's condition field.
+  # Updates @select or @update hash's condition field.
   # Params:
-  # - condition (str): Condition in String
+  # - op (str): Operator that will be used to compare (>, <, =, and in, etc.).
+  # - col (str): Column that will be conditioned.
+  # - value (dynamic): A value that will be target to compared  with col.
   # Returns:
   # - None
-  def with_condition(condition)
-    @select[:condition] = condition
+  def where(op,  col, value=nil)
+    condition = {:op => op, :col => col, :value => value}
+    if @select_in_progress:
+      @select[:condition].push(condition)
+    elsif @update_in_progrss:
+      @update[:condition].push(condition)
+    else
+      msg = "Error: <where> can only be used either with select or update.\n"
+      RubySQL::Assert.default_error_check(0, msg, @dbh)
     self
   end
 
@@ -216,6 +229,7 @@ class RubySQL
     end
     returned_rows, select_query = @selector.sqlite3_select(@select, mem_db)
     @queries += select_query
+    @select_in_progress = false
     return returned_rows
   end
 
@@ -247,7 +261,30 @@ class RubySQL
   def get_pk(table_name)
     return @select.sqlite3_get_pk(table_name)
   end
-  
+
+  # Create update AST structure with a user provided table_name.
+  # Params:
+  # - table_name (str): Table name
+  def update(table_name)
+    RubySQL::Assert.check_table_name(table_name, @dbh)
+    @update = {
+      :columns => [],
+      :table_name => table_name,
+      :condition => [],
+    }
+  end
+
+  # Fill @update[:columns] field with column_to_value.
+  # Params:
+  # - column_to_value (array): Array of hashes. [{"column" => value}] 
+  def set(column_to_value)
+    RubySQL::Asert.check_class(columns_to_value.class, Array, @dbh)
+    status = !@update[:condition].empty?
+    msg = "Error: Condition must be provided to update a table."
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @updator.sqlite3_update(@update)
+  end
+
   # This is just for debugging purpose.
   def print
     puts @table
