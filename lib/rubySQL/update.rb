@@ -8,7 +8,14 @@ class RubySQL::Update
     @dbm = dbm
   end
 
-  def sqlite_update(update_ast)
-
+  # Checks on update_ast, forms sql query and excutes query,
+  # and update in-memory DB AST and DB.
+  # Params:
+  # - update_ast (hash): Hash that holds data to update table.
+  # Returns:
+  # - update_query (str): SQL query that will be pushed SQLite3
+  # -
+  def sqlite3_update(update_ast)
+    
   end
 end
