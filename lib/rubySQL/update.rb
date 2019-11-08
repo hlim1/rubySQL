@@ -12,6 +12,7 @@ class RubySQL::Update
   # and update in-memory DB AST and DB.
   # Params:
   # - update_ast (hash): Hash that holds data to update table.
+  # - mem_db (hash): In memory database.
   # Returns:
   # - update_query (str): SQL query that will be pushed SQLite3
   # -
@@ -29,6 +30,13 @@ class RubySQL::Update
     puts update_query
   end
 
+  # Process set. Generates SQL query for set section.
+  # Params:
+  # - columns (hash): Column name to value map.
+  # - table_name (str): Table name.
+  # - mem_db (hash): In memory database.
+  # Returns:
+  # - updated_query (str); Formed SQL query for set.
   def process_set(columns, table_name, table_ast, mem_db)
     update_query = String.new
     columns.each {|col, val|
@@ -41,6 +49,11 @@ class RubySQL::Update
     return update_query
   end
 
+  # Process condition. Generate SQL query for where section.
+  # Params:
+  # - condition (hash): Condition holder
+  # Returns
+  # - updated_query (str); Formed SQL query for where.
   def process_condition(condition)
     update_query = " WHERE "
     status = RubySQL::Assert.check_operator(condition[:op])
