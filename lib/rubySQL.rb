@@ -187,7 +187,7 @@ class RubySQL
     @select = {
       :columns => [],
       :table_name => table_name,
-      :condition => [],
+      :condition => {},
       :direction => direction
     }
     self
@@ -259,7 +259,7 @@ class RubySQL
     @update = {
       :columns => {},
       :table_name => table_name,
-      :condition => [],
+      :condition => {},
     }
     self
   end
@@ -268,10 +268,17 @@ class RubySQL
   # Params:
   # - column_to_value (array): Array of hashes. {"column" => value,..., "column" => value} 
   def set(column_to_value)
+    status = column_to_value != nil 
+    msg = "Error: Set argument must be given."
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+
     RubySQL::Assert.check_class(column_to_value.class, Hash, @dbh)
+    @update[:columns] = column_to_value
+
     status = !@update[:condition].empty?
     msg = "Error: Condition must be provided to update a table."
     RubySQL::Assert.default_error_check(status, msg, @dbh)
+
     @updator.sqlite3_update(@update, @mem_db_col)
   end
 
@@ -291,9 +298,9 @@ class RubySQL
   def where(op,  col, value=nil)
     condition = {:op => op, :col => col, :value => value}
     if @select_in_progress
-      @select[:condition].push(condition)
+      @select[:condition] = condition
     elsif @update_in_progrss
-      @update[:condition].push(condition)
+      @update[:condition] = condition
     else
       msg = "Error: <where> can only be used either with select or update.\n"
       RubySQL::Assert.default_error_check(0, msg, @dbh)
