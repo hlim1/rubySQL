@@ -131,7 +131,7 @@ class RubySQL::DBManager
   end
 
   def get_table_ast(table_name)
-    status = @table_ast.has_key?(table_name)
+    status = table_exist?(table_name)
     RubySQL::Assert.table_not_exist(status, table_name, @dbh)
     return @table_ast[table_name]
   end
