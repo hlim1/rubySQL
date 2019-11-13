@@ -22,7 +22,7 @@ class RubySQL
   # - None
   def connect(db_name)
     @db                       = Connection.new(db_name)         # Connect to <db_name> database
-    @dbh                      = @db.connect_sqlite3
+    @dbh                      = @db.connect_sqlite3             # Database handler
     @dbm                      = DBManager.new(@dbh)             # Initialize database manageer
     @db_ast                   = @dbm.create_ast                 # Create DB AST
     @mem_db_col, @mem_db_row  = @dbm.load_tables                # Load data on to memory from the DB
@@ -53,6 +53,13 @@ class RubySQL
     query_file = File.new("Queries.txt", "w")
     query_file.write(@queries)
   end
+
+  ###################################################################
+  #                                                                 #
+  #                           CREATE                                #
+  #                                                                 #
+  ###################################################################
+
 
   # Creates an AST skeleton that will be populated with the user input
   # in other methods that will be chained with this method.
@@ -117,24 +124,12 @@ class RubySQL
                 )
   end
 
-  # Call sqlite3_schema method from create.rb to print the table schema.
-  # Params:
-  # - table_name (str): Table name
-  # Returns:
-  # - None
-  def schema_of(table_name)
-    @tb_creator.sqlite3_schema(table_name)
-  end
-
-  # Calls sqlite3_list_tables to print the list of tables in the database.
-  # Params:
-  # - None
-  # Returns:
-  # - None
-  def list_tables
-    @tb_creator.sqlite3_list_tables
-  end
-
+  ###################################################################
+  #                                                                 #
+  #                           INSERT                                #
+  #                                                                 #
+  ###################################################################
+  
   # Creates a new hash that has AST structure for insert.
   # Params:
   # - values (array): An array that holds values.
@@ -171,6 +166,12 @@ class RubySQL
     @dropper.drop_table(table_name)
   end
 
+  ###################################################################
+  #                                                                 #
+  #                           SELECT                                #
+  #                                                                 #
+  ###################################################################
+
   # Create select AST structure with a user provided table_name.
   # Params:
   # - table_name (str): Table name
@@ -186,28 +187,9 @@ class RubySQL
     @select = {
       :columns => [],
       :table_name => table_name,
-      :condition => [],
+      :condition => {},
       :direction => direction
     }
-    self
-  end
-
-  # Updates @select or @update hash's condition field.
-  # Params:
-  # - op (str): Operator that will be used to compare (>, <, =, and in, etc.).
-  # - col (str): Column that will be conditioned.
-  # - value (dynamic): A value that will be target to compared  with col.
-  # Returns:
-  # - None
-  def where(op,  col, value=nil)
-    condition = {:op => op, :col => col, :value => value}
-    if @select_in_progress:
-      @select[:condition].push(condition)
-    elsif @update_in_progrss:
-      @update[:condition].push(condition)
-    else
-      msg = "Error: <where> can only be used either with select or update.\n"
-      RubySQL::Assert.default_error_check(0, msg, @dbh)
     self
   end
 
@@ -262,27 +244,92 @@ class RubySQL
     return @select.sqlite3_get_pk(table_name)
   end
 
+  ###################################################################
+  #                                                                 #
+  #                           UPDATE                                #
+  #                                                                 #
+  ###################################################################
+   
   # Create update AST structure with a user provided table_name.
   # Params:
   # - table_name (str): Table name
   def update(table_name)
     RubySQL::Assert.check_table_name(table_name, @dbh)
+    @update_in_progrss = true
     @update = {
-      :columns => [],
+      :columns => {},
       :table_name => table_name,
-      :condition => [],
+      :condition => {},
     }
+    self
   end
 
   # Fill @update[:columns] field with column_to_value.
   # Params:
-  # - column_to_value (array): Array of hashes. [{"column" => value}] 
+  # - column_to_value (array): Array of hashes. {"column" => value,..., "column" => value} 
   def set(column_to_value)
-    RubySQL::Asert.check_class(columns_to_value.class, Array, @dbh)
+    status = column_to_value != nil 
+    msg = "Error: Set argument must be given."
+    RubySQL::Assert.default_error_check(status, msg, @dbh)
+
+    RubySQL::Assert.check_class(column_to_value.class, Hash, @dbh)
+    @update[:columns] = column_to_value
+
     status = !@update[:condition].empty?
     msg = "Error: Condition must be provided to update a table."
     RubySQL::Assert.default_error_check(status, msg, @dbh)
-    @updator.sqlite3_update(@update)
+
+    @updator.sqlite3_update(@update, @mem_db_col)
+  end
+
+  ###################################################################
+  #                                                                 #
+  #                     SHARED FUNCTIONS                            #
+  #                                                                 #
+  ###################################################################
+
+  # Updates @select or @update hash's condition field.
+  # Params:
+  # - op (str): Operator that will be used to compare (>, <, =, and in, etc.).
+  # - col (str): Column that will be conditioned.
+  # - value (dynamic): A value that will be target to compared  with col.
+  # Returns:
+  # - None
+  def where(op,  col, value=nil)
+    condition = {:op => op, :col => col, :value => value}
+    if @select_in_progress
+      @select[:condition] = condition
+    elsif @update_in_progrss
+      @update[:condition] = condition
+    else
+      msg = "Error: <where> can only be used either with select or update.\n"
+      RubySQL::Assert.default_error_check(0, msg, @dbh)
+    end
+    self
+  end
+ 
+  ###################################################################
+  #                                                                 #
+  #                        MISCELLANEOUS                            #
+  #                                                                 #
+  ###################################################################
+  
+  # Call sqlite3_schema method from create.rb to print the table schema.
+  # Params:
+  # - table_name (str): Table name
+  # Returns:
+  # - None
+  def schema_of(table_name)
+    @tb_creator.sqlite3_schema(table_name)
+  end
+
+  # Calls sqlite3_list_tables to print the list of tables in the database.
+  # Params:
+  # - None
+  # Returns:
+  # - None
+  def list_tables
+    @tb_creator.sqlite3_list_tables
   end
 
   # This is just for debugging purpose.
@@ -291,10 +338,11 @@ class RubySQL
   end
 end
 
+require 'rubySQL/db_manager'
 require 'rubySQL/connection'
 require 'rubySQL/assert'
 require 'rubySQL/create'
 require 'rubySQL/insert'
 require 'rubySQL/drop'
 require 'rubySQL/select'
-require 'rubySQL/db_manager'
+require 'rubySQL/update'

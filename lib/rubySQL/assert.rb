@@ -17,6 +17,17 @@ class RubySQL::Assert
     "*"
   ]
 
+  # Valid operators
+  @operators = [
+    "=", "!=", "==",
+    "<>", ">", "<",
+    ">=", "<=", "!<",
+    "!>", "&", "|",
+    "~", "<<", ">>",
+    "+", "-", "*",
+    "/", "%"
+  ]
+
   # Check for the passed status and print out error message
   # and  terminate the program or do nothing.
   # Params:
@@ -195,6 +206,16 @@ class RubySQL::Assert
     return 1
   end
 
+  # Checks if a value already in the column.
+  # If a value already exists while the column does not allow
+  # duplicate data, it'll return 0 else 1.
+  # Params:
+  # - col_name (str): Column name.
+  # - mem_db (hash): In memory database.
+  # - uniqueness (int): Binary representation for column uniqueness.
+  # - value (varies): A value that the user trying to insert into table.
+  # Returns:
+  # - 0 or 1 (int): status integer.
   def self.check_column_uniqueness(col_name, mem_db, uniqueness, value)
     if uniqueness == 1
       values_in_columns = mem_db[col_name]
@@ -237,5 +258,17 @@ class RubySQL::Assert
     status = table_ast.include?(column)
     msg = "Error: Column #{column} does not exist in table #{table_name}."
     default_error_check(status, msg, dbh)
+  end
+
+  # Check a validity of operator.
+  # Params:
+  # - operator (str): Operator.
+  # Returns:
+  # - 0 or 1 (int): Status integer.
+  def self.check_operator(op)
+    if !@operators.include?(op)
+      return 0
+    end
+    return 1
   end
 end
