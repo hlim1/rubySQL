@@ -32,6 +32,7 @@ class RubySQL::DBManager
     #   }
     @mem_db_col = Hash.new
     @mem_db_row = Hash.new
+    @queries = String.new
   end
 
   # Construct database abstract syntax tree.
@@ -155,5 +156,14 @@ class RubySQL::DBManager
     table_schema.chomp!(',')
     table_schema += ")"
     return table_schema
+  end
+
+  def write_queries()
+    File.new("Queries.txt", "w")
+    query_file.write(@queries)
+  end
+
+  def update_queries(query)
+    @queries += query
   end
 end
