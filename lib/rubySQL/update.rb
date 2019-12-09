@@ -25,9 +25,11 @@ class RubySQL::Update
     table_ast = @dbm.get_table_ast(table_name)
     update_query += process_set(update_ast[:columns], table_name, table_ast, mem_db)
     update_query += process_condition(update_ast[:condition])
+    update_query += ";"
 
-    # DEBUG
-    puts update_query
+    @dbh.execute(update_query)
+    @mem_db_col, @mem_db_row = @dbm.update_mem_database("u", table_name, update_ast)
+    return @mem_db_col, @mem_db_row, update_query + "\n"
   end
 
   # Process set. Generates SQL query for set section.
@@ -59,6 +61,9 @@ class RubySQL::Update
     status = RubySQL::Assert.check_operator(condition[:op])
     msg = "Error: Invalid operator #{condition[:op]} for condition.\n"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
+
+    update_query += "#{condition[:col]} #{condition[:op]} #{condition[:val].to_s}"
+
     return update_query
   end
 end
