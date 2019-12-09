@@ -30,7 +30,6 @@ class RubySQL
     @insert_hd                = Insert.new(@dbh, @dbm)          # Initialize insert handler
     @selector                 = Select.new(@dbh, @dbm)          # Initialize select handler
     @updator                  = Update.new(@dbh, @dbm)          # Initialize update handler
-    @queries                  = String.new                      # On memory query holder
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -50,8 +49,7 @@ class RubySQL
   def close
     @db.sqlite3_close
     # At close, flush all the executed SQL queries into a file.
-    query_file = File.new("Queries.txt", "w")
-    query_file.write(@queries)
+    @dbm.write_queries
   end
 
   ###################################################################
@@ -116,12 +114,13 @@ class RubySQL
   # - None
   def primary(column)
     @table[:primary_key] = column
-    @queries += @tb_creator.sqlite3_create_tb(
+    query += @tb_creator.sqlite3_create_tb(
                   @table[:table_name], 
                   @table[:columns], 
                   @table[:primary_key],
                   @table[:if_not_exist],
                 )
+    @dbm.update_queries(query)
   end
 
   ###################################################################
@@ -153,7 +152,8 @@ class RubySQL
   # - None
   def into(table_name)
     @insert[:table_name] = table_name
-    @queries += @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @mem_db_col)
+    query = @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @mem_db_col)
+    @dbm.update_queries(query)
   end
 
   # Drops specified table from the database.
@@ -210,7 +210,8 @@ class RubySQL
       mem_db = @mem_db_col
     end
     returned_rows, select_query = @selector.sqlite3_select(@select, mem_db)
-    @queries += select_query
+    query = select_query
+    @dbm.update_queries(query)
     @select_in_progress = false
     return returned_rows
   end
@@ -231,7 +232,8 @@ class RubySQL
       msg += "Direction must be a string either 'row' or 'col'."
       RubySQL::Assert.default_error_check(0, msg, @dbh)
     end
-    @queries += select_all_query
+    query = select_all_query
+    @dbm.update_queries(query)
     return returned_data
   end
 
@@ -280,7 +282,7 @@ class RubySQL
     RubySQL::Assert.default_error_check(status, msg, @dbh)
 
     @mem_db_col, @mem_db_row, query = @updator.sqlite3_update(@update, @mem_db_col)
-    @queries += query
+    @dbm.update_queries(query)
   end
 
   ###################################################################
