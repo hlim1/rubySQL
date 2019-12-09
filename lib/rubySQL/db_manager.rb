@@ -137,10 +137,6 @@ class RubySQL::DBManager
   end
 
   def get_table_ast(table_name)
-    status = table_exist?(table_name)
-    if statue == 0
-      return false
-    end
     return @table_ast[table_name]
   end
 
