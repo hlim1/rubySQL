@@ -20,10 +20,10 @@ class RubySQL::Create
   # - table_name (str): Table name.
   # - columns (list): A list of hashes that holds column info.
   # - primary_key (str): A column name that will be set to primary key.
-  # - if_not_exist (str): It tells whether the user wants to execute create
+  # - if_not_exist (str): It tells whether the user wants to execute create.
   # operation even if the table exists or not.
   # Returns:
-  # - None
+  # - create_query (str): Successfully executed create table query.
   def sqlite3_create_tb(table_name, columns, primary_key, if_not_exist)
     if if_not_exist.downcase == "n"
       status = @dbm.table_exist?(table_name)
@@ -33,7 +33,6 @@ class RubySQL::Create
     # Retrieve only the column names
     col_names = columns[0].keys
 
-    #    
     table_spec_str = '('
     # col: Column name
     # columns[0][col][0]: Column type
@@ -53,8 +52,11 @@ class RubySQL::Create
     }
     table_spec_str.chomp!(',')
     table_spec_str.concat(')')
+    
+    create_query = "CREATE TABLE IF NOT EXISTS #{table_name} #{table_spec_str};"
+    @dbh.execute(create_query)
 
-    @dbh.execute("CREATE TABLE IF NOT EXISTS #{table_name} #{table_spec_str};")
+    return create_query + "\n"
   end
 
   # Prints out the schema of specified table.
@@ -79,19 +81,10 @@ class RubySQL::Create
       
       # Check null status and convert the stored binary value
       # into string "YES" or "NO"
-      if schema[3] == 1
-        schema[3] = "YES"
-      else
-        schema[3] = "NO"
-      end
-
+      schema[3] = (schema[3] == 1 ? "YES":"NO")
       # Check primary key status and convert the stored
       # binary value into string "YES" or "NO"
-      if schema[5] == 1
-        schema[5] = "YES"
-      else
-        schema[5] = "NO"
-      end
+      schema[5] = (schema[5] == 1 ? "YES":"NO")
     }
 
     # Print out the schema in a table format

@@ -30,7 +30,8 @@ class RubySQL::DBManager
     #         ...
     #     },
     #   }
-    @mem_database = Hash.new
+    @mem_db_col = Hash.new
+    @mem_db_row = Hash.new
   end
 
   # Construct database abstract syntax tree.
@@ -49,7 +50,7 @@ class RubySQL::DBManager
           # schema:
           # 0 := CID (int), 1 := table name (str), 2 := type (str),
           # 3 := null? (int, 1: Null. 0: Not-null)
-          # 5 := PK? (int, 1: Null. 0: Not-null)
+          # 5 := PK? (int, 1: PK. 0: Not-PK)
           column_info[schema[1]] = {:type => schema[2], :null? => schema[3], :pk? => schema[5]}
         }
         @table_ast[table[1]] = column_info
@@ -62,13 +63,24 @@ class RubySQL::DBManager
   # Params:
   # - None
   # Returns:
-  # -
+  # - @mem_database (hash): Hash that holds all data loaded from DB.
   def load_tables
     tables = @table_ast.keys
     tables.each {|table|
+      columns = Hash.new
+      column_names = @table_ast[table].keys
       rows = @dbh.execute("SELECT * FROM #{table}")
-      @mem_database[table] = rows
+      @mem_db_row[table] = rows
+      column_names.each {|col|
+        col_data = Array.new
+        rows.each {|data|
+          col_data.push(data[col])
+        }
+        columns[col] = col_data
+      }
+      @mem_db_col[table] = columns
     }
+    return @mem_db_col, @mem_db_row
   end
 
   # Update AST when UPDATE and DROP.
@@ -88,12 +100,17 @@ class RubySQL::DBManager
   #   "d" => "drop",
   #   "c" => "create column"
   # }
-  def update_mem_database (action, table_name)
+  def update_mem_database (action, table_name, update_ast=nil)
     if action == "d"
       # Delete table from in memory DB
       status = @mem_database.delete(table_name)
+    elsif action == "u"
+      # load_tables method will re-load database from the disk
+      # and updates both by -row and -column on-memory database.
+      return load_tables
     end
   end
+
 
   # Get and return the list of tables in the database
   # Params:
@@ -116,5 +133,27 @@ class RubySQL::DBManager
   def table_exist?(table_name)
     status = @table_ast.has_key?(table_name)
     return status
+  end
+
+  def get_table_ast(table_name)
+    status = table_exist?(table_name)
+    RubySQL::Assert.table_not_exist(status, table_name, @dbh)
+    return @table_ast[table_name]
+  end
+
+  def get_table_schema(table_name)
+    table_schema = "#{table_name} ("
+    @table_ast[table_name].each {|col_name, col_info|
+      null_stat = (col_info[:null?] == 1 ? "NOT NULL":"NULL")
+      pk_stat = (col_info[:pk?] == 1 ? "PRIMARY KEY":"")
+      if pk_stat  == "PRIMARY KEY"
+        table_schema += "(#{col_name}: [#{col_info[:type]}, #{null_stat}, #{pk_stat}]),"
+      else
+        table_schema += "(#{col_name}: [#{col_info[:type]}, #{null_stat}]),"
+      end
+    }
+    table_schema.chomp!(',')
+    table_schema += ")"
+    return table_schema
   end
 end
