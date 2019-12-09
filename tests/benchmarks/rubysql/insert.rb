@@ -1,4 +1,5 @@
 require 'rubySQL'
+require 'benchmark'
 
 # Create a RubySQL object
 rbsql = RubySQL.new
@@ -8,10 +9,12 @@ rbsql = RubySQL.new
 rbsql.connect("DB_test")
 
 # Insert values into table COMPANY_A
-rbsql.insert([1, "ABC", 29, "Tucson, Az", {"SALARY":100000.00}]).into("COMPANY_A")
-rbsql.insert([2, "DEF", 30, "Los Angeles, CA", {"SALARY":200000.00}]).into("COMPANY_A")
-rbsql.insert([3, "GHI", 40, "San Francisco", {"SALARY":300000.00}]).into("COMPANY_A")
-rbsql.insert([4, "JKL", 50, {"SALARY":400000.00}]).into("COMPANY_A")
+puts Benchmark.measure {
+  rbsql.insert([1, "ABC", 29, "Tucson, Az", {"SALARY":100000.00}]).into("COMPANY_A")
+  rbsql.insert([2, "DEF", 30, "Los Angeles, CA", {"SALARY":200000.00}]).into("COMPANY_A")
+  rbsql.insert([3, "GHI", 40, "San Francisco", {"SALARY":300000.00}]).into("COMPANY_A")
+  rbsql.insert([4, "JKL", 50, {"SALARY":400000.00}]).into("COMPANY_A")
+}
 #rbsql.insert([5, "MNO", 40, {"SALARY":400000.00}]).into("COMPANY_A")
 
 # Below code is an error about table not exist
