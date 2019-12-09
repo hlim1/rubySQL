@@ -9,10 +9,11 @@ class RubySQL::Create
   # - db_name (str): Database name
   # Returns:
   # - None
-  def initialize(dbh, dbm, db_name)
+  def initialize(dbh, dbm, db_name, assert)
     @dbh = dbh
     @dbm = dbm
     @db_name = db_name
+    @assert = assert
   end
 
   # Create a new table in the database.
@@ -27,7 +28,7 @@ class RubySQL::Create
   def sqlite3_create_tb(table_name, columns, primary_key, if_not_exist)
     if if_not_exist.downcase == "n"
       status = @dbm.table_exist?(table_name)
-      RubySQL::Assert.table_already_exist(status, table_name, @dbh)
+      @assert.table_already_exist(status, table_name, @dbh)
     end 
 
     # Retrieve only the column names
@@ -39,7 +40,7 @@ class RubySQL::Create
     # columns[1][col][1]: Column nullable
     col_names.each {|col|
       col_type = columns[0][col][0]
-      RubySQL::Assert.check_type(col_type)
+      @assert.check_type(col_type)
       if col == primary_key
         table_spec_str.concat("#{col} #{col_type} PRIMARY KEY NOT NULL,")
       else

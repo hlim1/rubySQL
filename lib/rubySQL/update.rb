@@ -3,9 +3,10 @@ require_relative 'assert'
 require_relative 'db_manager'
 
 class RubySQL::Update
-  def initialize(dbh, dbm)
+  def initialize(dbh, dbm, assert)
     @dbh = dbh
     @dbm = dbm
+    @assert = assert
   end
 
   # Checks on update_ast, forms sql query and excutes query,
@@ -22,7 +23,11 @@ class RubySQL::Update
     # Prepare update query string
     update_query = "UPDATE #{table_name} SET "
 
+    status = @dbm.table_exist?(table_name)
+    @assert.table_not_exist(status, table_name, @dbh)
+
     table_ast = @dbm.get_table_ast(table_name)
+
     update_query += process_set(update_ast[:columns], table_name, table_ast, mem_db)
     update_query += process_condition(update_ast[:condition])
     update_query += ";"
@@ -42,9 +47,9 @@ class RubySQL::Update
   def process_set(columns, table_name, table_ast, mem_db)
     update_query = String.new
     columns.each {|col, val|
-      RubySQL::Assert.column_exist(table_name, col, table_ast, @dbh)
+      @assert.column_exist(table_name, col, table_ast, @dbh)
       cur_column_in_table = [col, table_ast[col]]
-      RubySQL::Assert.check_column_value(cur_column_in_table, val, mem_db[table_name], @dbh)
+      @assert.check_column_value(cur_column_in_table, val, mem_db[table_name], @dbh)
       update_query += "#{col} = #{val},"
     }
     update_query.chomp!(',')
@@ -58,9 +63,9 @@ class RubySQL::Update
   # - updated_query (str); Formed SQL query for where.
   def process_condition(condition)
     update_query = " WHERE "
-    status = RubySQL::Assert.check_operator(condition[:op])
+    status = @assert.check_operator(condition[:op])
     msg = "Error: Invalid operator #{condition[:op]} for condition.\n"
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
 
     update_query += "#{condition[:col]} #{condition[:op]} #{condition[:val].to_s}"
 
