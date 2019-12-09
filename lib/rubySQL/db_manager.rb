@@ -100,10 +100,12 @@ class RubySQL::DBManager
   #   "d" => "drop",
   #   "c" => "create column"
   # }
-  def update_mem_database (action, table_name)
+  def update_mem_database (action, table_name, update_ast=nil)
     if action == "d"
       # Delete table from in memory DB
       status = @mem_database.delete(table_name)
+    elsif action == "u"
+      return load_tables
     end
   end
 

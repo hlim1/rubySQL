@@ -231,7 +231,7 @@ class RubySQL
       msg += "Direction must be a string either 'row' or 'col'."
       RubySQL::Assert.default_error_check(0, msg, @dbh)
     end
-    @queries = select_all_query
+    @queries += select_all_query
     return returned_data
   end
 
@@ -279,7 +279,8 @@ class RubySQL
     msg = "Error: Condition must be provided to update a table."
     RubySQL::Assert.default_error_check(status, msg, @dbh)
 
-    @updator.sqlite3_update(@update, @mem_db_col)
+    @mem_db_col, @mem_db_row, query = @updator.sqlite3_update(@update, @mem_db_col)
+    @queries += query
   end
 
   ###################################################################
@@ -296,7 +297,7 @@ class RubySQL
   # Returns:
   # - None
   def where(op,  col, value=nil)
-    condition = {:op => op, :col => col, :value => value}
+    condition = {:op => op, :col => col, :val => value}
     if @select_in_progress
       @select[:condition] = condition
     elsif @update_in_progrss
