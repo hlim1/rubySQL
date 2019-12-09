@@ -28,7 +28,7 @@ class RubySQL::Update
     update_query += ";"
 
     @dbh.execute(update_query)
-    @mem_db_col, @mem_db_row = @dbm.update_mem_database("u", table_name, update_ast)
+    #@mem_db_col, @mem_db_row = @dbm.update_mem_database("u", table_name, update_ast)
     return @mem_db_col, @mem_db_row, update_query + "\n"
   end
 
