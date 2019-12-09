@@ -111,6 +111,7 @@ class RubySQL::DBManager
     end
   end
 
+
   # Get and return the list of tables in the database
   # Params:
   # - None

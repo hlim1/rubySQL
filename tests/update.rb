@@ -1,5 +1,4 @@
 require 'rubySQL'
-require 'benchmark'
 
 # Create a RubySQL object
 rbsql = RubySQL.new
@@ -10,13 +9,11 @@ rbsql.connect("DB_test")
 
 puts "Table in COMPANY_A before update:"
 table = rbsql.select_all("COMPANY_A")
-puts table
+puts "#{table}\n"
 
-puts Benchmark.measure {
-  rbsql.update("COMPANY_A").where(">=", "SALARY", 400000).set({"SALARY" => 650000.00})
-}
+rbsql.update("COMPANY_A").where(">=", "SALARY", 400000).set({"SALARY" => 650000.00})
 
 puts "Table in COMPANY_A after update:"
-puts rbsql.select_all("COMPANY_A")
+puts "#{rbsql.select_all('COMPANY_A')}\n"
 
 rbsql.close
