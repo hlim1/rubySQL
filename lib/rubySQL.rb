@@ -24,6 +24,7 @@ class RubySQL
     @db                       = Connection.new(db_name)         # Connect to <db_name> database
     @dbh                      = @db.connect_sqlite3             # Database handler
     @dbm                      = DBManager.new(@dbh)             # Initialize database manager
+    @db                       = Connection.new(db_name)         # Connect to <db_name> database
     @assert                   = Assert.new(@dbm)                # Initialize assert object
     @db_ast                   = @dbm.create_ast                 # Create DB AST
     @mem_db_col, @mem_db_row  = @dbm.load_tables                # Load data on to memory from the DB
@@ -115,7 +116,7 @@ class RubySQL
   # - None
   def primary(column)
     @table[:primary_key] = column
-    query += @tb_creator.sqlite3_create_tb(
+    query = @tb_creator.sqlite3_create_tb(
                   @table[:table_name], 
                   @table[:columns], 
                   @table[:primary_key],

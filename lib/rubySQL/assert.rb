@@ -4,34 +4,36 @@ require_relative 'db_manager'
 class RubySQL::Assert
   def initialize(dbm)
     @dbm = dbm
+
+    # An array of SQLite3 types
+    @sqlite3_types = [
+      "TEXT", "CHAR",
+      "CHARACTER", "VARCHAR",
+      "INT", "INTEGER",
+      "NULL", "REAL",
+      "DOUBLE", "DOUBLE PRECISION",
+      "FLOAT",
+      "BLOB", "BOOL"
+    ]
+
+    # Reserved SQL keywords
+    @reserved_keywords = [
+      "*"
+    ]
+
+    # Valid operators
+    @operators = [
+      "=", "!=", "==",
+      "<>", ">", "<",
+      ">=", "<=", "!<",
+      "!>", "&", "|",
+      "~", "<<", ">>",
+      "+", "-", "*",
+      "/", "%"
+    ]
   end
 
-  # An array of SQLite3 types
-  @sqlite3_types = [
-    "TEXT", "CHAR",
-    "CHARACTER", "VARCHAR",
-    "INT", "INTEGER",
-    "NULL", "REAL",
-    "DOUBLE", "DOUBLE PRECISION",
-    "FLOAT",
-    "BLOB", "BOOL"
-  ]
 
-  # Reserved SQL keywords
-  @reserved_keywords = [
-    "*"
-  ]
-
-  # Valid operators
-  @operators = [
-    "=", "!=", "==",
-    "<>", ">", "<",
-    ">=", "<=", "!<",
-    "!>", "&", "|",
-    "~", "<<", ">>",
-    "+", "-", "*",
-    "/", "%"
-  ]
 
   # Check for the passed status and print out error message
   # and  terminate the program or do nothing.
@@ -41,7 +43,7 @@ class RubySQL::Assert
   # - dbh (DB obj): Database handlerfor closing the DB.
   # Returns:
   # - None.
-  def self.default_error_check(status, msg, dbh)
+  def default_error_check(status, msg, dbh)
     if status == 0 or status == false
       puts msg
       dbh.close if dbh
@@ -72,7 +74,7 @@ class RubySQL::Assert
   # - dbh (DB obj): Database handler.
   # Returns:
   # - None.
-  def self.check_table_name(table_name, dbh)
+  def check_table_name(table_name, dbh)
     if not table_name.is_a?(String)
       puts "Error: Invalid table_name type. Table name type must be String."
       printf "Error: User input <#{table_name}>, which is type <#{table_name.class}>.\n"
@@ -90,7 +92,7 @@ class RubySQL::Assert
   # - table_name (str): Table name.
   # Returns:
   # - None
-  def self.table_already_exist(status, table_name, dbh)
+  def table_already_exist(status, table_name, dbh)
     if status == true
       printf "Error: Table #{table_name} already exist.\n"
       dbh.close if dbh
@@ -108,7 +110,7 @@ class RubySQL::Assert
   # - dbh (DB obj): Database handlerfor closing the DB.
   # Returns:
   # - None.
-  def self.table_not_exist(status, table_name, dbh)
+  def table_not_exist(status, table_name, dbh)
     if status == false or status == nil
       printf "Error: Table #{table_name} does not exist in the database.\n"
       dbh.close if dbh
@@ -124,7 +126,7 @@ class RubySQL::Assert
   # - type (str): User input type.
   # Returns:
   # - None
-  def self.check_type(type)
+  def check_type(type)
     if !@sqlite3_types.include?(type.upcase)
       printf "Error: Type #{type} is not a valid SQLite3 type.\n"
       dbh.close if dbh
@@ -141,7 +143,7 @@ class RubySQL::Assert
   # - dbh (DB obj): Database handlerfor closing the DB.
   # Returns:
   # - None.
-  def self.check_class(input_class, compare_class, dbh)
+  def check_class(input_class, compare_class, dbh)
     if input_class != compare_class
       puts "Error: Invalid value class (#{input_clas})."
       puts "The value class must be #{compare_class}."
@@ -160,7 +162,7 @@ class RubySQL::Assert
   # - dbh (obj): Database handler.
   # Returns:
   # - None
-  def self.check_column_value(cur_column_in_table, value, mem_db, dbh)
+  def check_column_value(cur_column_in_table, value, mem_db, dbh)
     col_name = cur_column_in_table[0]
     col_type = cur_column_in_table[1][:type]
     if cur_column_in_table[1][:pk?] == 1
@@ -183,7 +185,7 @@ class RubySQL::Assert
     default_error_check(status, msg, dbh)
   end
 
-  def self.check_column_type(col_type, value)
+  def check_column_type(col_type, value)
     # TODO: Type check for BLOB
     if (
         (col_type.upcase == "INT"\
@@ -228,7 +230,7 @@ class RubySQL::Assert
   # - value (varies): A value that the user trying to insert into table.
   # Returns:
   # - 0 or 1 (int): status integer.
-  def self.check_column_uniqueness(col_name, mem_db, uniqueness, value)
+  def check_column_uniqueness(col_name, mem_db, uniqueness, value)
     if uniqueness == 1
       values_in_columns = mem_db[col_name]
       if values_in_columns.include? value
@@ -246,7 +248,7 @@ class RubySQL::Assert
   # - table_ast (hash): Table ast that holds column name to column info mapping.
   # - dbh (obj): Database handler.
   # Returns:
-  def self.select_column_check(table_name, columns, table_ast, dbh)
+  def select_column_check(table_name, columns, table_ast, dbh)
     columns.each {|column|
       if column == "*"
         status = columns.length == 1
@@ -266,7 +268,7 @@ class RubySQL::Assert
   # - dbh (obj): Database handler.
   # Returns:
   # - None.
-  def self.column_exist(table_name, column, table_ast, dbh)
+  def column_exist(table_name, column, table_ast, dbh)
     status = table_ast.include?(column)
     msg = "Error: Column #{column} does not exist in table #{table_name}."
     default_error_check(status, msg, dbh)
@@ -277,7 +279,7 @@ class RubySQL::Assert
   # - operator (str): Operator.
   # Returns:
   # - 0 or 1 (int): Status integer.
-  def self.check_operator(op)
+  def check_operator(op)
     if !@operators.include?(op)
       return 0
     end

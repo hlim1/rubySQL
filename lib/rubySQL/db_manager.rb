@@ -161,7 +161,7 @@ class RubySQL::DBManager
   end
 
   def write_queries
-    File.new("Queries.txt", "w")
+    query_file = File.new("Queries.txt", "w")
     query_file.write(@queries)
   end
 
