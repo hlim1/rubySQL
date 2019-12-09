@@ -134,9 +134,9 @@ class RubySQL
   # Params:
   # - values (array): An array that holds values.
   def insert(values)
-    status = columns.class == Array
+    status = values.class == Array
     msg = "Error: insert() must receive a string(s) of array as argument.\n"
-    msg += "User provided #{columns.class}"
+    msg += "User provided #{values.class}"
     RubySQL::Assert.default_error_check(status, msg, @dbh)
     @insert = {
       :table_name => "",
@@ -153,7 +153,7 @@ class RubySQL
   # - None
   def into(table_name)
     @insert[:table_name] = table_name
-    @queries += @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @mem_db)
+    @queries += @insert_hd.sqlite3_insert(@insert[:table_name], @insert[:values], @mem_db_col)
   end
 
   # Drops specified table from the database.

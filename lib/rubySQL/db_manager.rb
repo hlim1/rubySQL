@@ -105,6 +105,8 @@ class RubySQL::DBManager
       # Delete table from in memory DB
       status = @mem_database.delete(table_name)
     elsif action == "u"
+      # load_tables method will re-load database from the disk
+      # and updates both by -row and -column on-memory database.
       return load_tables
     end
   end

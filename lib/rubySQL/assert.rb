@@ -166,7 +166,7 @@ class RubySQL::Assert
     # Checks whether user's value already exists in the DB table column.
     # Error if the column is not allowed for duplicate data.
     status = check_column_uniqueness(col_name, mem_db, uniqueness, value)
-    msg = "Error: All values in column <#{col_name}>must be unique.\n"
+    msg = "Error: All values in column <#{col_name}> must be unique.\n"
     msg += "User input value <#{value}> already exist."
     default_error_check(status, msg, dbh)
   end
