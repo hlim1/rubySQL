@@ -1,6 +1,11 @@
 require 'sqlite3'
+require_relative 'db_manager'
 
 class RubySQL::Assert
+  def initialize(dbm)
+    @dbm = dbm
+  end
+
   # An array of SQLite3 types
   @sqlite3_types = [
     "TEXT", "CHAR",
@@ -40,6 +45,7 @@ class RubySQL::Assert
     if status == 0 or status == false
       puts msg
       dbh.close if dbh
+      @dbm.write_queries
       exit
     end
   end
@@ -54,6 +60,7 @@ class RubySQL::Assert
     if not db_name.is_a?(String)
       puts "Error: Invalid db_name type. db_name type must be String."
       printf "Error: User input <#{db_name}>, which is type <#{db_name.class}>.\n"
+      @dbm.write_queries
       exit
     end
   end
@@ -70,6 +77,7 @@ class RubySQL::Assert
       puts "Error: Invalid table_name type. Table name type must be String."
       printf "Error: User input <#{table_name}>, which is type <#{table_name.class}>.\n"
       dbh.close if dbh
+      @dbm.write_queries
       exit
     end
   end
@@ -86,6 +94,7 @@ class RubySQL::Assert
     if status == true
       printf "Error: Table #{table_name} already exist.\n"
       dbh.close if dbh
+      @dbm.write_queries
       exit
     end
   end
@@ -103,6 +112,7 @@ class RubySQL::Assert
     if status == false or status == nil
       printf "Error: Table #{table_name} does not exist in the database.\n"
       dbh.close if dbh
+      @dbm.write_queries
       exit
     end
   end
@@ -118,6 +128,7 @@ class RubySQL::Assert
     if !@sqlite3_types.include?(type.upcase)
       printf "Error: Type #{type} is not a valid SQLite3 type.\n"
       dbh.close if dbh
+      @dbm.write_queries
       exit
     end
   end
@@ -135,6 +146,7 @@ class RubySQL::Assert
       puts "Error: Invalid value class (#{input_clas})."
       puts "The value class must be #{compare_class}."
       dbh.close if dbh
+      @dbm.write_queries
       exit
     end
   end

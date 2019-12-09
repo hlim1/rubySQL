@@ -23,13 +23,14 @@ class RubySQL
   def connect(db_name)
     @db                       = Connection.new(db_name)         # Connect to <db_name> database
     @dbh                      = @db.connect_sqlite3             # Database handler
-    @dbm                      = DBManager.new(@dbh)             # Initialize database manageer
+    @dbm                      = DBManager.new(@dbh)             # Initialize database manager
+    @assert                   = Assert.new(@dbm)                # Initialize assert object
     @db_ast                   = @dbm.create_ast                 # Create DB AST
     @mem_db_col, @mem_db_row  = @dbm.load_tables                # Load data on to memory from the DB
-    @tb_creator               = Create.new(@dbh, @dbm, db_name) # Initialize table creator 
-    @insert_hd                = Insert.new(@dbh, @dbm)          # Initialize insert handler
-    @selector                 = Select.new(@dbh, @dbm)          # Initialize select handler
-    @updator                  = Update.new(@dbh, @dbm)          # Initialize update handler
+    @tb_creator               = Create.new(@dbh, @dbm, db_name, @assert) # Initialize table creator 
+    @insert_hd                = Insert.new(@dbh, @dbm, @assert)          # Initialize insert handler
+    @selector                 = Select.new(@dbh, @dbm, @assert)          # Initialize select handler
+    @updator                  = Update.new(@dbh, @dbm, @assert)          # Initialize update handler
   end
 
   # Calls sqlite2_version method that is declared in the connect.rb
@@ -93,13 +94,13 @@ class RubySQL
     status = columns.class == Array
     msg = "Error: 'with(__columns__)' must receive <array> of hashes.\n"
     msg += "Syntax: with (['column_name' => ['type', 'null?'])"
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
 
     columns.each {|col| 
       status = col.class == Hash  
       msg = "Error: 'with(__columns__)' must receive array of <hashes>.\n"
       msg += "Syntax: with (['column_name' => ['type', 'null?'])"
-      RubySQL::Assert.default_error_check(status, msg, @dbh)
+      @assert.default_error_check(status, msg, @dbh)
       @table[:columns].push(col)
     }
     self
@@ -136,7 +137,7 @@ class RubySQL
     status = values.class == Array
     msg = "Error: insert() must receive a string(s) of array as argument.\n"
     msg += "User provided #{values.class}"
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
     @insert = {
       :table_name => "",
       :values => values
@@ -162,7 +163,7 @@ class RubySQL
   # Returns:
   # - None
   def drop_table(table_name)
-    @dropper = Drop.new(@dbh, @dbm, @db_ast)
+    @dropper = Drop.new(@dbh, @dbm, @db_ast, @assert)
     @dropper.drop_table(table_name)
   end
 
@@ -178,11 +179,11 @@ class RubySQL
   # - directions (str): Direction that user wants to retrieve by.
   def select_from(table_name, direction="row")
     @select_in_progress = true
-    RubySQL::Assert.check_table_name(table_name, @dbh)
+    @assert.check_table_name(table_name, @dbh)
     status = (direction.class == String and (direction == "row" or direction == "col"))
     msg = "Error: direction must be either 'row' or 'col'.\n"
     msg += "User input #{direction}."
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
 
     @select = {
       :columns => [],
@@ -202,7 +203,7 @@ class RubySQL
     status = columns.class == Array
     msg = "Error: select() must receive a string(s) of array as argument.\n"
     msg += "User provided #{columns.class}"
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
     @select[:columns] = columns
     if @select[:direction] == "row"
       mem_db = @mem_db_row
@@ -230,7 +231,7 @@ class RubySQL
     else
       msg = "Error: Invalid direction input: #{direction}."
       msg += "Direction must be a string either 'row' or 'col'."
-      RubySQL::Assert.default_error_check(0, msg, @dbh)
+      @assert.default_error_check(0, msg, @dbh)
     end
     query = select_all_query
     @dbm.update_queries(query)
@@ -256,7 +257,7 @@ class RubySQL
   # Params:
   # - table_name (str): Table name
   def update(table_name)
-    RubySQL::Assert.check_table_name(table_name, @dbh)
+    @assert.check_table_name(table_name, @dbh)
     @update_in_progrss = true
     @update = {
       :columns => {},
@@ -272,14 +273,14 @@ class RubySQL
   def set(column_to_value)
     status = column_to_value != nil 
     msg = "Error: Set argument must be given."
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
 
-    RubySQL::Assert.check_class(column_to_value.class, Hash, @dbh)
+    @assert.check_class(column_to_value.class, Hash, @dbh)
     @update[:columns] = column_to_value
 
     status = !@update[:condition].empty?
     msg = "Error: Condition must be provided to update a table."
-    RubySQL::Assert.default_error_check(status, msg, @dbh)
+    @assert.default_error_check(status, msg, @dbh)
 
     @mem_db_col, @mem_db_row, query = @updator.sqlite3_update(@update, @mem_db_col)
     @dbm.update_queries(query)
@@ -306,7 +307,7 @@ class RubySQL
       @update[:condition] = condition
     else
       msg = "Error: <where> can only be used either with select or update.\n"
-      RubySQL::Assert.default_error_check(0, msg, @dbh)
+      @assert.default_error_check(0, msg, @dbh)
     end
     self
   end

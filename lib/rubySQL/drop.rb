@@ -3,15 +3,16 @@ require_relative 'assert'
 require_relative 'db_manager'
 
 class RubySQL::Drop
-  def initialize(dbh, dbm, db_ast)
+  def initialize(dbh, dbm, db_ast, assert)
     @dbh = dbh
     @dbm = dbm
     @db_ast = db_ast
+    @assert
   end
 
   def drop_table(table_name)
     status = @dbm.table_exist?(table_name)
-    RubySQL::Assert.table_not_exist(status, table_name, @dbh)
+    @assert.table_not_exist(status, table_name, @dbh)
 
     @dbh.execute("DROP TABLE #{table_name}")
     # Update AST by removing the table.

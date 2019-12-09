@@ -138,7 +138,9 @@ class RubySQL::DBManager
 
   def get_table_ast(table_name)
     status = table_exist?(table_name)
-    RubySQL::Assert.table_not_exist(status, table_name, @dbh)
+    if statue == 0
+      return false
+    end
     return @table_ast[table_name]
   end
 
@@ -158,7 +160,7 @@ class RubySQL::DBManager
     return table_schema
   end
 
-  def write_queries()
+  def write_queries
     File.new("Queries.txt", "w")
     query_file.write(@queries)
   end
