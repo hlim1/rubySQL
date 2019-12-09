@@ -16,7 +16,7 @@ class RubySQL::Drop
     @dbh.execute("DROP TABLE #{table_name}")
     # Update AST by removing the table.
     @dbm.update_AST("d", table_name)
-    # TODO: Update memory loaded database.
-    # @dbm.update_mem_database("drop", table_name)
+    # Update memory loaded database.
+    @dbm.update_mem_database("drop", table_name)
   end
 end
