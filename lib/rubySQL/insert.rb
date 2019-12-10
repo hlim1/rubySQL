@@ -19,7 +19,6 @@ class RubySQL::Insert
   def sqlite3_insert(table_name, values, mem_db)
     @assert.check_table_name(table_name, @dbh)
 
-    table_ast = Hash.new
     table_ast = @dbm.get_table_ast(table_name)
     # TODO: Each value element type. All types are acceptable.
     # If hash, {key:value} needs to be {column_name:value}.

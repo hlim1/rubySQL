@@ -30,7 +30,7 @@ class RubySQL::Select
     condition_exist = false
     if condition
       condition_exist = true
-      condition_query = "#{condition[:col]} #{condition[:op]} #{condition[:value]}"
+      condition_query = "#{condition[:col]} #{condition[:op]} #{condition[:val]}"
     end
 
     columns_to_select = String.new
@@ -38,50 +38,47 @@ class RubySQL::Select
       if col == "*"
         return sqlite3_select_all(table_name, mem_db)
       end
-      columns_to_select += "#{col},"
+      columns_to_select += " #{col},"
     }
     columns_to_select.chomp(',')
+
     if condition
       select_query = "SELECT #{columns_to_select} FROM #{table_name} WHERE #{condition_query};"
     else
       select_query = "SELECT #{columns_to_select} FROM #{table_name};"
     end
 
+    ids = Array.new
     if select_ast[:direction] == "row"
       returned_rows = Array.new
       mem_db[table_name].each {|rows|
         row = Hash.new
         columns.each {|col_n|
-          if condition_exist then
-            if col_n == condition[:col] then
-              if condition[:op] == "==" and rows[col_n] == condition[:val].to_i then
-                val = rows[col_n]
-              elsif condition[:op] == ">=" and rows[col_n] >= condition[:val].to_f then
-                val = rows[col_n]
-              elsif condition[:op] == "<=" and rows[col_n] <= condition[:val].to_ithen
-                val = rows[col_n]
-              elsif condition[:op] == ">" and rows[col_n] > condition[:val].to_i then
-                val = rows[col_n]
-              elsif condition[:op] == "<" and rows[col_n] < condition[:val].to_ithen
-                val = rows[col_n]
-              elsif condition[:op] == "!=" and rows[col_n] != condition[:val].to_ithen
-                val = rows[col_n]
-              else
-                status = @assert.check_operator(condition[:op])
-                msg = "Error: Currently #{condition[:op]} is not handled.\n"
-                @assert.default_error_check(status, msg, @dbh)
-              end
-            else
-              val = nil
-            end
-          else
-            val = rows[col_n]
-          end
-          if val
-            row[col_n] = val
-          end
+          val = rows[col_n]
+          row[col_n] = val
         }
-        returned_rows.push(row)
+
+        if condition_exist then
+          if condition[:op] == "==" and row[condition[:col]] == condition[:val].to_i then
+            returned_rows.push(row)
+          elsif condition[:op] == ">=" and row[condition[:col]] >= condition[:val].to_f then
+            returned_rows.push(row)
+          elsif condition[:op] == "<=" and row[condition[:col]] <= condition[:val].to_ithen
+            returned_rows.push(row)
+          elsif condition[:op] == ">" and row[condition[:col]] > condition[:val].to_i then
+            returned_rows.push(row)
+          elsif condition[:op] == "<" and row[condition[:col]] < condition[:val].to_ithen
+            returned_rows.push(row)
+          elsif condition[:op] == "!=" and row[condition[:col]] != condition[:val].to_ithen
+            returned_rows.push(row)
+          else
+            status = @assert.check_operator(condition[:op])
+            msg = "Error: Currently #{condition[:op]} is not handled.\n"
+            @assert.default_error_check(status, msg, @dbh)
+          end
+        else
+          returned_rows.push(row)
+        end
       }
       return returned_rows, select_query + "\n"
     else
@@ -106,7 +103,16 @@ class RubySQL::Select
     @assert.check_table_name(table_name, @dbh)
     # get_table_ast does the table existence check.
     table_ast = @dbm.get_table_ast(table_name)
-    returned_data = mem_db[table_name]
+    returned_data = Array.new
+    mem_db[table_name].each {|row|
+      r = Hash.new
+      row.each {|key, val|
+        if key.instance_of? String
+          r[key] = val
+        end
+      }
+      returned_data.push(r)
+    }
     select_all_query = "SELECT * FROM #{table_name};"
     return returned_data, select_all_query + "\n"
   end
