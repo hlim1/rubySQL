@@ -52,36 +52,40 @@ class RubySQL::Select
       mem_db[table_name].each {|rows|
         row = Hash.new
         columns.each {|col_n|
-          # DEBUG
-          puts "col_n: #{col_n}"
-          puts "rows[col_n]: #{rows[col_n]}"
-          if condition_exist and col_n == condition[:col]
-              if condition[:op] == "==" and condition[:val] == rows[col_n]
+          if condition_exist then
+            if col_n == condition[:col] then
+              if condition[:op] == "==" and rows[col_n] == condition[:val].to_i then
                 val = rows[col_n]
-              elsif condition[:op] == "=>" and condition[:val] => rows[col_n]
+              elsif condition[:op] == ">=" and rows[col_n] >= condition[:val].to_f then
                 val = rows[col_n]
-              elsif condition[:op] == "<=" and condition[:val] <= rows[col_n]
+              elsif condition[:op] == "<=" and rows[col_n] <= condition[:val].to_ithen
                 val = rows[col_n]
-              elsif condition[:op] == ">" and condition[:val] > rows[col_n]
+              elsif condition[:op] == ">" and rows[col_n] > condition[:val].to_i then
                 val = rows[col_n]
-              elsif condition[:op] == "<" and condition[:val] < rows[col_n]
+              elsif condition[:op] == "<" and rows[col_n] < condition[:val].to_ithen
                 val = rows[col_n]
-              elsif condition[:op] == "!=" and condition[:val] != rows[col_n]
+              elsif condition[:op] == "!=" and rows[col_n] != condition[:val].to_ithen
                 val = rows[col_n]
               else
-                status = 0
+                status = @assert.check_operator(condition[:op])
                 msg = "Error: Currently #{condition[:op]} is not handled.\n"
                 @assert.default_error_check(status, msg, @dbh)
+              end
+            else
+              val = nil
             end
           else
             val = rows[col_n]
           end
-          row[col_n] = val
+          if val
+            row[col_n] = val
+          end
         }
         returned_rows.push(row)
       }
       return returned_rows, select_query + "\n"
     else
+      # TODO: Condition operations for column based select return.
       returned_cols = Hash.new
       columns.each {|col|
         returned_cols[col] = mem_db[table_name][col]
