@@ -26,8 +26,14 @@ class RubySQL::Select
     columns = select_ast[:columns]
     @assert.select_column_check(table_name, columns, table_ast, @dbh)
 
-    columns_to_select = String.new
+    condition = select_ast[:condition]
+    condition_exist = false
+    if condition
+      condition_exist = true
+      condition_query = "#{condition[:col]} #{condition[:op]} #{condition[:value]}"
+    end
 
+    columns_to_select = String.new
     columns.each {|col|
       if col == "*"
         return sqlite3_select_all(table_name, mem_db)
@@ -35,14 +41,42 @@ class RubySQL::Select
       columns_to_select += "#{col},"
     }
     columns_to_select.chomp(',')
-    select_query = "SELECT #{columns_to_select} FROM #{table_name};"
+    if condition
+      select_query = "SELECT #{columns_to_select} FROM #{table_name} WHERE #{condition_query};"
+    else
+      select_query = "SELECT #{columns_to_select} FROM #{table_name};"
+    end
 
     if select_ast[:direction] == "row"
       returned_rows = Array.new
       mem_db[table_name].each {|rows|
         row = Hash.new
         columns.each {|col_n|
-          row[col_n] = rows[col_n]
+          # DEBUG
+          puts "col_n: #{col_n}"
+          puts "rows[col_n]: #{rows[col_n]}"
+          if condition_exist and col_n == condition[:col]
+              if condition[:op] == "==" and condition[:val] == rows[col_n]
+                val = rows[col_n]
+              elsif condition[:op] == "=>" and condition[:val] => rows[col_n]
+                val = rows[col_n]
+              elsif condition[:op] == "<=" and condition[:val] <= rows[col_n]
+                val = rows[col_n]
+              elsif condition[:op] == ">" and condition[:val] > rows[col_n]
+                val = rows[col_n]
+              elsif condition[:op] == "<" and condition[:val] < rows[col_n]
+                val = rows[col_n]
+              elsif condition[:op] == "!=" and condition[:val] != rows[col_n]
+                val = rows[col_n]
+              else
+                status = 0
+                msg = "Error: Currently #{condition[:op]} is not handled.\n"
+                @assert.default_error_check(status, msg, @dbh)
+            end
+          else
+            val = rows[col_n]
+          end
+          row[col_n] = val
         }
         returned_rows.push(row)
       }
